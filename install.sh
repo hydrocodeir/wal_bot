@@ -16,11 +16,12 @@ else
     echo -e "${CYAN}Python3 is already installed.${NC}"
 fi
 
-# Step 2: Check and install pip for Python3
+# Step 2: Check and install pip for Python3 if necessary
 echo -e "${GREEN}Checking pip installation...${NC}"
 if ! command -v pip3 &>/dev/null; then
     echo -e "${YELLOW}pip is not installed. Installing pip...${NC}"
-    sudo apt install -y python3-pip || { echo -e "${RED}Failed to install pip.${NC}"; exit 1; }
+    curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
+    sudo python3 get-pip.py || { echo -e "${RED}Failed to install pip.${NC}"; exit 1; }
 else
     echo -e "${CYAN}pip is already installed.${NC}"
 fi
