@@ -16,7 +16,16 @@ else
     echo -e "${CYAN}Python3 is already installed.${NC}"
 fi
 
-# Step 2: Clone the repository
+# Step 2: Check and install pip for Python3
+echo -e "${GREEN}Checking pip installation...${NC}"
+if ! command -v pip3 &>/dev/null; then
+    echo -e "${YELLOW}pip is not installed. Installing pip...${NC}"
+    sudo apt install -y python3-pip || { echo -e "${RED}Failed to install pip.${NC}"; exit 1; }
+else
+    echo -e "${CYAN}pip is already installed.${NC}"
+fi
+
+# Step 3: Clone the repository
 REPO_URL="https://github.com/primeZdev/wal_bot.git"
 REPO_DIR="wal_bot"
 
@@ -29,7 +38,7 @@ fi
 
 cd "$REPO_DIR" || { echo -e "${RED}Failed to enter the $REPO_DIR directory.${NC}"; exit 1; }
 
-# Step 3: Prompt for configuration values
+# Step 4: Prompt for configuration values
 ENV_FILE=".env"
 
 echo -e "${GREEN}Configuring your wal_bot...${NC}"
@@ -58,7 +67,7 @@ echo -e "${CYAN}Enter your Panel Password:${NC} (default: your_panel_password)"
 read -r PANEL_PASS
 PANEL_PASS=${PANEL_PASS:-your_panel_password}
 
-# Step 4: Save to .env file
+# Step 5: Save to .env file
 cat <<EOF > "$ENV_FILE"
 ADMIN_CHAT_ID=${ADMIN_CHAT_ID}
 BOT_TOKEN=${BOT_TOKEN}
@@ -69,10 +78,6 @@ PANEL_PASS=${PANEL_PASS}
 EOF
 
 echo -e "${GREEN}Configuration saved successfully to ${ENV_FILE}!${NC}"
-
-# Step 5: Install dependencies
-echo -e "${GREEN}Installing dependencies...${NC}"
-sudo apt update && sudo apt install -y git
 
 # Step 6: Install Python requirements using python3 -m pip
 echo -e "${GREEN}Installing Python libraries...${NC}"
