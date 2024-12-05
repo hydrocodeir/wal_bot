@@ -12,7 +12,7 @@ echo -e "${GREEN}Cloning the wal_bot repository...${NC}"
 if [ -d "wal_bot" ]; then
     echo -e "${YELLOW}The wal_bot directory already exists. Skipping cloning.${NC}"
 else
-    git clone https://github.com/your-repository/wal_bot.git
+    git clone https://github.com/primeZdev/wal_bot.git
     cd wal_bot || { echo -e "${RED}Failed to enter the wal_bot directory.${NC}"; exit 1; }
 fi
 
