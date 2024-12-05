@@ -74,11 +74,15 @@ echo -e "${GREEN}Configuration saved successfully to ${ENV_FILE}!${NC}"
 echo -e "${GREEN}Installing dependencies...${NC}"
 sudo apt update && sudo apt install -y git
 
-# Step 6: Install Python requirements
+# Step 6: Install Python requirements using python3 -m pip
 echo -e "${GREEN}Installing Python libraries...${NC}"
-pip3 install -r requirements.txt || { echo -e "${RED}Failed to install Python libraries. Please check your internet connection.${NC}"; exit 1; }
+python3 -m pip install -r requirements.txt || { echo -e "${RED}Failed to install Python libraries. Please check your internet connection.${NC}"; exit 1; }
 
-# Step 7: Create a Systemd service
+# Step 7: Run createdata.py one time
+echo -e "${GREEN}Running createdata.py once...${NC}"
+python3 createdata.py || { echo -e "${RED}Failed to run createdata.py. Please check for errors in the script.${NC}"; exit 1; }
+
+# Step 8: Create a Systemd service
 SERVICE_FILE="/etc/systemd/system/wal_bot.service"
 
 sudo bash -c "cat <<EOF > ${SERVICE_FILE}
@@ -96,7 +100,7 @@ Restart=always
 WantedBy=multi-user.target
 EOF"
 
-# Step 8: Enable and start the service
+# Step 9: Enable and start the service
 echo -e "${GREEN}Enabling and starting the wal_bot service...${NC}"
 sudo systemctl daemon-reload
 sudo systemctl enable wal_bot.service
