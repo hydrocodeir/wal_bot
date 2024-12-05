@@ -17,11 +17,17 @@ else
 fi
 
 # Step 2: Clone the repository
+REPO_URL="https://github.com/primeZdev/wal_bot.git"
+REPO_DIR="wal_bot"
+
 echo -e "${GREEN}Cloning the wal_bot repository...${NC}"
-if [ ! -d "wal_bot" ]; then
-    git clone https://github.com/primeZdev/wal_bot.git || { echo -e "${RED}Failed to clone the repository.${NC}"; exit 1; }
+if [ ! -d "$REPO_DIR" ]; then
+    git clone "$REPO_URL" || { echo -e "${RED}Failed to clone the repository. Please check the URL or your internet connection.${NC}"; exit 1; }
+else
+    echo -e "${YELLOW}Repository already exists. Skipping clone step.${NC}"
 fi
-cd wal_bot || { echo -e "${RED}Failed to enter the wal_bot directory.${NC}"; exit 1; }
+
+cd "$REPO_DIR" || { echo -e "${RED}Failed to enter the $REPO_DIR directory.${NC}"; exit 1; }
 
 # Step 3: Prompt for configuration values
 ENV_FILE=".env"
@@ -70,7 +76,7 @@ sudo apt update && sudo apt install -y git
 
 # Step 6: Install Python requirements
 echo -e "${GREEN}Installing Python libraries...${NC}"
-pip3 install -r requirements.txt
+pip3 install -r requirements.txt || { echo -e "${RED}Failed to install Python libraries. Please check your internet connection.${NC}"; exit 1; }
 
 # Step 7: Create a Systemd service
 SERVICE_FILE="/etc/systemd/system/wal_bot.service"
