@@ -105,9 +105,9 @@ def add_seller_step1(message):
 def add_seller_step2(message, seller_id):
     if message.content_type == 'text':
         try:
-            custom_value = int(message.text)
-            if add_seller(seller_id, custom_value):
-                bot.send_message(message.chat.id, f'Seller added: ID={seller_id}, Inbound id={custom_value}', reply_markup=admin_menu())
+            inb_id = int(message.text)
+            if add_seller(seller_id, inb_id):
+                bot.send_message(message.chat.id, f'Seller added: ID={seller_id}, Inbound id={inb_id}', reply_markup=admin_menu())
             else:
                 bot.send_message(message.chat.id, 'Seller already exists.')
         except ValueError:
@@ -206,9 +206,9 @@ def add_user_f(chat_id):
     "reset": ""
     }]}
 
-    custom_value = get_custom_value(chat_id)
+    inb_id = get_inb_id(chat_id)
     proces = {
-        "id": custom_value,
+        "id": inb_id,
         "settings": json.dumps(settings)
     }
 
@@ -216,7 +216,7 @@ def add_user_f(chat_id):
 
     if res2.status_code == 200:
 
-        bot.send_message(chat_id, f"✅ User added successfully \n\n👇 Subscription for [ {email} ]\n\n{sub}{sub_id}")
+        bot.send_message(chat_id, f"✅ User added successfully \n\n👇 Subscription for [ {email} ]\n\nhttps://{sub}/{sub_id}")
         bot.send_message(chat_id, START_FOR_SELLERS, reply_markup=seller_menu())
 
         clear_user_data(chat_id)

@@ -44,27 +44,27 @@ ENV_FILE=".env"
 
 echo -e "${GREEN}Configuring your wal_bot...${NC}"
 
-echo -e "${CYAN}Enter your Telegram Admin Chat ID:${NC} (default: 123456789)"
+echo -e "${CYAN}Enter your Telegram Admin Chat ID:${NC} (example: 123456789)"
 read -r ADMIN_CHAT_ID
 ADMIN_CHAT_ID=${ADMIN_CHAT_ID:-123456789}
 
-echo -e "${CYAN}Enter your Telegram Bot Token:${NC} (default: your_telegram_bot_token)"
+echo -e "${CYAN}Enter your Telegram Bot Token:${NC} (example: your_telegram_bot_token)"
 read -r BOT_TOKEN
 BOT_TOKEN=${BOT_TOKEN:-your_telegram_bot_token}
 
-echo -e "${CYAN}Enter your Panel Address:${NC} (default: panel.example.com/fxg6JRgG6LqDjAG)"
+echo -e "${CYAN}Enter your Panel Address:${NC} (example: panel.example.com/path)"
 read -r PANEL_ADDRESS
 PANEL_ADDRESS=${PANEL_ADDRESS:-panel.example.com/fxg6JRgG6LqDjAG}
 
-echo -e "${CYAN}Enter your Subscription Address:${NC} (default: panel.example.com/sub)"
+echo -e "${CYAN}Enter your Subscription Address:${NC} (example: panel.example.com/subpath)"
 read -r SUB_ADDRESS
 SUB_ADDRESS=${SUB_ADDRESS:-panel.example.com/sub}
 
-echo -e "${CYAN}Enter your Panel Username:${NC} (default: your_panel_username)"
+echo -e "${CYAN}Enter your Panel Username:${NC} (example: your_panel_username)"
 read -r PANEL_USER
 PANEL_USER=${PANEL_USER:-your_panel_username}
 
-echo -e "${CYAN}Enter your Panel Password:${NC} (default: your_panel_password)"
+echo -e "${CYAN}Enter your Panel Password:${NC} (example: your_panel_password)"
 read -r PANEL_PASS
 PANEL_PASS=${PANEL_PASS:-your_panel_password}
 

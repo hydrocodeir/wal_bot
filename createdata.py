@@ -8,7 +8,7 @@ cursor = conn.cursor()
 cursor.execute('''
 CREATE TABLE IF NOT EXISTS sellers (
     id INTEGER PRIMARY KEY,
-    custom_value INTEGER
+    inb_id INTEGER
 )
 ''')
 
@@ -19,13 +19,13 @@ conn.close()
 
 
 # add seller
-def add_seller(seller_id, custom_value):
+def add_seller(seller_id, inb_id):
     conn = sqlite3.connect('wal.db')
     cursor = conn.cursor()
     try:
         cursor.execute(
-            'INSERT INTO sellers (id, custom_value) VALUES (?, ?)',
-            (seller_id, custom_value)
+            'INSERT INTO sellers (id, inb_id) VALUES (?, ?)',
+            (seller_id, inb_id)
         )
         conn.commit()
         return True
@@ -67,10 +67,10 @@ def is_seller(chat_id):
 
 
 # get id for create user
-def get_custom_value(chat_id):
+def get_inb_id(chat_id):
     conn = sqlite3.connect('wal.db')
     cursor = conn.cursor()
-    cursor.execute("SELECT custom_value FROM sellers WHERE id = ?", (chat_id,))
+    cursor.execute("SELECT inb_id FROM sellers WHERE id = ?", (chat_id,))
     result = cursor.fetchone()
     conn.close()
     return result[0] if result else None

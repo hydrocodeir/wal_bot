@@ -11,9 +11,9 @@ welcome to the seller dashboard.
 🐋 wall bot (v 0.9.0)"""
 
 
-ADD_EMAIL ="""1⃣ Please send a name"""
+ADD_EMAIL ="""1⃣ Please send a name for this client:"""
 
-ADD_TRAFFIC = """2⃣ please send traffic usage for that clint"""
+ADD_TRAFFIC = """2⃣ Please send the total amount of traffic for that client:"""
 
-ADD_DAYS ="""3⃣ please send days for that clint"""
+ADD_DAYS ="""3⃣ Please send the number of days allowed for that client:"""
 
