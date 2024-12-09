@@ -5,6 +5,7 @@ import datetime
 import secrets
 import string
 import os
+import time
 from createdata import *
 from message import *
 from telebot import TeleBot
@@ -20,9 +21,9 @@ Admin_chat_id = int(os.getenv("ADMIN_CHAT_ID"))
 # Admin menu
 def admin_menu ():
     markup = InlineKeyboardMarkup(row_width=2)
-    button1 = InlineKeyboardButton('Add Sellers', callback_data= 'add_sellers')
-    button2 = InlineKeyboardButton('Show Sellers', callback_data= 'show_sellers')
-    button3 = InlineKeyboardButton('Delete Seller', callback_data= 'del_sellers')
+    button1 = InlineKeyboardButton('👤 Add admin', callback_data= 'add_sellers')
+    button2 = InlineKeyboardButton('👁️ Show admins', callback_data= 'show_sellers')
+    button3 = InlineKeyboardButton('❌ Delete admin', callback_data= 'del_sellers')
     markup.add(button1, button2, button3)
     return markup
 
@@ -31,8 +32,8 @@ def admin_menu ():
 # Sellers menu
 def seller_menu ():
     markup = InlineKeyboardMarkup(row_width=2)
-    button1 = InlineKeyboardButton('Add User', callback_data= 'add_user_')
-    button2 = InlineKeyboardButton('Show Users', callback_data= 'Show_users_')
+    button1 = InlineKeyboardButton('👤 Add User', callback_data= 'add_user_')
+    button2 = InlineKeyboardButton('🪪 Show Users', callback_data= 'Show_users_')
     markup.add(button1, button2)
     return markup
 
@@ -250,13 +251,34 @@ def send_emails_with_buttons(chat_id):
 
         markup = InlineKeyboardMarkup(row_width=1)
         for email in emails:
-            button = InlineKeyboardButton(text=email, callback_data=email)
+            url = f"https://{panel}/panel/api/inbounds/getClientTraffics/{email}"
+            res = s.get(url=url)
+            res_data = res.json()
+    
+
+            status = '✅' if res_data.get("obj", {}).get("enable", False) else '❌'
+
+            expiry_time = res_data.get("obj", {}).get("expiryTime", 0)
+            remaining_days = 0  
+            if expiry_time > 0:
+                current_time = int(time.time() * 1000)
+                remaining_time_ms = expiry_time - current_time
+
+                if remaining_time_ms > 0:
+                    remaining_days = int(remaining_time_ms / (1000 * 60 * 60 * 24))
+
+
+            button = InlineKeyboardButton(
+                text=f'name: {email} | status: {status} |  time remaining: {remaining_days} D',
+                callback_data=email
+            )
             markup.add(button)
+
 
         return_button = InlineKeyboardButton(text="♻️ Return ♻️", callback_data="cancel2")
         markup.add(return_button)
 
-        bot.send_message(chat_id, "Select an email:......................", reply_markup=markup)
+        bot.send_message(chat_id, "This section is being updated...", reply_markup=markup)
     else:
         bot.send_message(chat_id, f"Failed to fetch emails. Status code: {get.status_code}")
 
