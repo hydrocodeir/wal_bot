@@ -30,23 +30,24 @@ fi
 REPO_URL="https://github.com/primeZdev/wal_bot.git"
 REPO_DIR="wal_bot"
 
-if [ -d "$REPO_DIR" ]; then
-    echo -e "${CYAN}Project directory exists. Updating repository...${NC}"
-    cd "$REPO_DIR" || { echo -e "${RED}Failed to enter project directory.${NC}"; exit 1; }
-    git reset --hard HEAD
-    git pull origin main || { echo -e "${RED}Failed to update repository. Please check for conflicts.${NC}"; exit 1; }
-else
-    echo -e "${CYAN}Cloning the repository...${NC}"
+if [ ! -d "$REPO_DIR" ]; then
+    echo -e "${GREEN}Cloning the wal_bot repository...${NC}"
     git clone "$REPO_URL" || { echo -e "${RED}Failed to clone the repository. Please check the URL or your internet connection.${NC}"; exit 1; }
+else
+    echo -e "${YELLOW}Repository already exists. Pulling the latest changes...${NC}"
     cd "$REPO_DIR" || { echo -e "${RED}Failed to enter the $REPO_DIR directory.${NC}"; exit 1; }
+    git pull origin main || { echo -e "${RED}Failed to update the repository.${NC}"; exit 1; }
 fi
 
-# Step 4: Prompt for configuration values
+cd "$REPO_DIR" || { echo -e "${RED}Failed to enter the $REPO_DIR directory.${NC}"; exit 1; }
+
+# Step 4: Prompt for configuration values (for updates only if necessary)
 ENV_FILE=".env"
 
-if [ ! -f "$ENV_FILE" ]; then
-    echo -e "${YELLOW}Configuration file (.env) not found. Setting up...${NC}"
+echo -e "${GREEN}Configuring your wal_bot...${NC}"
 
+# Check if the .env file exists, if not, prompt for configuration
+if [ ! -f "$ENV_FILE" ]; then
     echo -e "${CYAN}Enter your Telegram Admin Chat ID:${NC} (example: 123456789)"
     read -r ADMIN_CHAT_ID
     ADMIN_CHAT_ID=${ADMIN_CHAT_ID:-123456789}
@@ -71,6 +72,7 @@ if [ ! -f "$ENV_FILE" ]; then
     read -r PANEL_PASS
     PANEL_PASS=${PANEL_PASS:-your_panel_password}
 
+    # Step 5: Save to .env file
     cat <<EOF > "$ENV_FILE"
 ADMIN_CHAT_ID=${ADMIN_CHAT_ID}
 BOT_TOKEN=${BOT_TOKEN}
@@ -79,30 +81,24 @@ SUB_ADDRESS=${SUB_ADDRESS}
 PANEL_USER=${PANEL_USER}
 PANEL_PASS=${PANEL_PASS}
 EOF
+
     echo -e "${GREEN}Configuration saved successfully to ${ENV_FILE}!${NC}"
 else
-    echo -e "${CYAN}Configuration file (.env) already exists. Skipping configuration step.${NC}"
+    echo -e "${CYAN}.env file already exists. Skipping configuration step.${NC}"
 fi
 
-# Step 5: Install Python requirements
+# Step 6: Install Python requirements using python3 -m pip
 echo -e "${GREEN}Installing Python libraries...${NC}"
 python3 -m pip install -r requirements.txt || { echo -e "${RED}Failed to install Python libraries. Please check your internet connection.${NC}"; exit 1; }
 
-# Step 6: Run createdata.py only on the first installation
-if [ ! -f "data_initialized" ]; then
-    echo -e "${GREEN}Running createdata.py once...${NC}"
-    python3 createdata.py || { echo -e "${RED}Failed to run createdata.py. Please check for errors in the script.${NC}"; exit 1; }
-    touch data_initialized
-else
-    echo -e "${CYAN}Database already initialized. Skipping createdata.py.${NC}"
-fi
+# Step 7: Run createdata.py one time (if necessary)
+echo -e "${GREEN}Running createdata.py once...${NC}"
+python3 createdata.py || { echo -e "${RED}Failed to run createdata.py. Please check for errors in the script.${NC}"; exit 1; }
 
-# Step 7: Create or update the Systemd service
+# Step 8: Create or update Systemd service
 SERVICE_FILE="/etc/systemd/system/wal_bot.service"
 
-if [ ! -f "$SERVICE_FILE" ]; then
-    echo -e "${CYAN}Creating the wal_bot service...${NC}"
-    sudo bash -c "cat <<EOF > ${SERVICE_FILE}
+sudo bash -c "cat <<EOF > ${SERVICE_FILE}
 [Unit]
 Description=wal_bot Telegram Bot Service
 After=network.target
@@ -116,13 +112,11 @@ Restart=always
 [Install]
 WantedBy=multi-user.target
 EOF"
-    sudo systemctl daemon-reload
-    sudo systemctl enable wal_bot.service
-else
-    echo -e "${CYAN}Service file already exists. Restarting service...${NC}"
-fi
 
-# Step 8: Restart the service
-sudo systemctl restart wal_bot.service || { echo -e "${RED}Failed to restart the wal_bot service.${NC}"; exit 1; }
+# Step 9: Enable and start the service
+echo -e "${GREEN}Enabling and starting the wal_bot service...${NC}"
+sudo systemctl daemon-reload
+sudo systemctl enable wal_bot.service
+sudo systemctl start wal_bot.service
 
-echo -e "${GREEN}Your wal_bot is now installed/updated and running!${NC}"
+echo -e "${GREEN}Your wal_bot is now running and configured to start on boot!${NC}"
