@@ -269,7 +269,7 @@ def send_emails_with_buttons(chat_id):
 
 
             button = InlineKeyboardButton(
-                text=f'name: {email} | status: {status} |  time remaining: {remaining_days} D',
+                text=f'👤: {email} | status: {status} |  ⌛: {remaining_days} D',
                 callback_data=email
             )
             markup.add(button)
