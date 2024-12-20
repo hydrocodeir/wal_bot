@@ -88,7 +88,7 @@ def callback_handler (call):
         bot.register_next_step_handler(call.message, add_user_step1)
 
     if call.data == 'Show_users_':
-        send_emails_with_buttons(call.message.chat.id)
+        send_emails_(call.message.chat.id)
 
 
 
@@ -232,9 +232,11 @@ def clear_user_data(chat_id):
 
 
 
-
-def send_emails_with_buttons(chat_id):
-    url = f"https://{panel}/panel/api/inbounds/get/2"
+email_data={}
+def send_emails_(chat_id):
+    
+    inb_id = get_inb_id(chat_id)
+    url = f"https://{panel}/panel/api/inbounds/get/{inb_id}"
 
     get = s.get(url=url, headers=headers)
 
@@ -243,44 +245,53 @@ def send_emails_with_buttons(chat_id):
         settings = json.loads(data["obj"]["settings"])
         clients = settings["clients"]
 
-        emails = [client["email"] for client in clients if "email" in client]
-
-        if not emails:
-            bot.send_message(chat_id, "No emails found.")
+        if not clients:
+            bot.send_message(chat_id, "No users found.")
             return
 
-        markup = InlineKeyboardMarkup(row_width=1)
-        for email in emails:
-            url = f"https://{panel}/panel/api/inbounds/getClientTraffics/{email}"
-            res = s.get(url=url)
-            res_data = res.json()
-    
+        user_list = "📋 Users List:\n\n"
+        for index, client in enumerate(clients, start=1):
+            email = client.get("email", "Unknown")
+            expiry_time = client.get("expiryTime", 0)
+            remaining_days = 0
 
-            status = '✅' if res_data.get("obj", {}).get("enable", False) else '❌'
-
-            expiry_time = res_data.get("obj", {}).get("expiryTime", 0)
-            remaining_days = 0  
             if expiry_time > 0:
                 current_time = int(time.time() * 1000)
                 remaining_time_ms = expiry_time - current_time
-
                 if remaining_time_ms > 0:
                     remaining_days = int(remaining_time_ms / (1000 * 60 * 60 * 24))
 
+            user_list += f"{index}️⃣ Email: {email} | ⌛ Days Left: {remaining_days}\n\n"
 
-            button = InlineKeyboardButton(
-                text=f'👤: {email} | status: {status} |  ⌛: {remaining_days} D',
-                callback_data=email
-            )
-            markup.add(button)
+        user_list += "\n📩 Send the user number to get Sub ID."
+        bot.send_message(chat_id, user_list)
 
 
-        return_button = InlineKeyboardButton(text="♻️ Return ♻️", callback_data="cancel2")
-        markup.add(return_button)
-
-        bot.send_message(chat_id, "This section is being updated...", reply_markup=markup)
+        
+        email_data[chat_id] = clients
     else:
-        bot.send_message(chat_id, f"Failed to fetch emails. Status code: {get.status_code}")
+        bot.send_message(chat_id, f"Failed to fetch user list. Status code: {get.status_code}")
+
+
+@bot.message_handler(func=lambda message: message.text.isdigit())
+def send_sub_id(message):
+
+    chat_id = message.chat.id
+    user_index = int(message.text) - 1
+
+    if chat_id not in email_data or user_index < 0 or user_index >= len(email_data[chat_id]):
+        bot.send_message(chat_id, "Invalid number. Please try again.")
+        return
+
+    selected_user = email_data[chat_id][user_index]
+    email = selected_user.get("email", "Unknown")
+    sub_id = selected_user.get("subId", "Sub ID not found")
+
+    markup = InlineKeyboardMarkup()
+    return_button = InlineKeyboardButton(text="♻️ Return ♻️", callback_data="cancel2")
+    markup.add(return_button)
+
+    bot.send_message(chat_id, f"👤 Email: {email}\n\n🔑 Sub: https://{sub}/{sub_id}", reply_markup=markup)
 
 
 

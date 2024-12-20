@@ -17,7 +17,6 @@ conn.close()
 
 
 
-
 # add seller
 def add_seller(seller_id, inb_id):
     conn = sqlite3.connect('wal.db')
