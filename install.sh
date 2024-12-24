@@ -93,7 +93,7 @@ SERVICE_FILE="/etc/systemd/system/wal_bot.service"
 
 sudo bash -c "cat <<EOF > ${SERVICE_FILE}
 [Unit]
-Description=wal_bot Telegram Bot Service
+Description=wal_bot
 After=network.target
 
 [Service]

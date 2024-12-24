@@ -76,11 +76,11 @@ def callback_handler (call):
         bot.register_next_step_handler(call.message, add_seller_step1)
 
     if call.data == 'show_sellers':
-        message = "Sellers List:\n" + "\n".join([str(seller) for seller in get_all_sellers()])
+        message = "👤 Sellers List:\n" + "\n".join([str(seller) for seller in get_all_sellers()])
         bot.edit_message_text(message, chat_id=chat_id, message_id=message_id, reply_markup=return_button_admin())
     
     if call.data == 'del_sellers':
-        bot.edit_message_text('enter admin id for delete', chat_id=chat_id, message_id=message_id, reply_markup=return_button_admin())
+        bot.edit_message_text('🪪 Enter admin id for delete', chat_id=chat_id, message_id=message_id, reply_markup=return_button_admin())
         bot.register_next_step_handler(call.message, Del_seller)
 
     if call.data == 'add_user_':
@@ -98,21 +98,21 @@ def add_seller_step1(message):
     if message.content_type == 'text':
         try:
             seller_id = int(message.text)
-            bot.send_message(message.chat.id, 'Enter inbound id for this seller:')
+            bot.send_message(message.chat.id, '🎯 Enter inbound id for this seller:')
             bot.register_next_step_handler(message, lambda msg: add_seller_step2(msg, seller_id))
         except ValueError:
-            bot.send_message(message.chat.id, 'Please send a valid seller ID.')
+            bot.send_message(message.chat.id, '❌ Please send a valid seller ID.')
 
 def add_seller_step2(message, seller_id):
     if message.content_type == 'text':
         try:
             inb_id = int(message.text)
             if add_seller(seller_id, inb_id):
-                bot.send_message(message.chat.id, f'Seller added: ID={seller_id}, Inbound id={inb_id}', reply_markup=admin_menu())
+                bot.send_message(message.chat.id, f'👤Seller added: \nID={seller_id} \nInbound id={inb_id}', reply_markup=admin_menu())
             else:
                 bot.send_message(message.chat.id, 'Seller already exists.')
         except ValueError:
-            bot.send_message(message.chat.id, 'Please send a valid number.')
+            bot.send_message(message.chat.id, '❌ Please send a valid number.')
 
 
 #del seller
@@ -121,7 +121,7 @@ def Del_seller(message):
         try:
             delete_id = int(message.text)
             delete_seller(delete_id)
-            bot.send_message(message.chat.id, f"Seller with ID {delete_id} has been deleted.", reply_markup=admin_menu())
+            bot.send_message(message.chat.id, f"Seller with ID {delete_id} \nhas been deleted.", reply_markup=admin_menu())
         except ValueError:
             bot.send_message(message.chat.id, "Please enter a valid numeric ID.")
         except Exception as e:
@@ -263,7 +263,7 @@ def send_emails_(chat_id):
 
             user_list += f"{index}️⃣ Email: {email} | ⌛ Days Left: {remaining_days}\n\n"
 
-        user_list += "\n📩 Send the user number to get Sub ID."
+        user_list += "\n📩 Send the user number to get Sub:"
         bot.send_message(chat_id, user_list)
 
 
@@ -303,5 +303,5 @@ def send_sub_id(message):
 
 
 
-
-bot.polling()
+if __name__ == "__main__":
+    bot.polling()
