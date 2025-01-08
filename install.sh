@@ -15,12 +15,20 @@ install_wal_bot() {
     echo -e "${GREEN}Checking Python installation...${NC}"
     if ! command -v python3 &>/dev/null; then
         echo -e "${YELLOW}Python3 is not installed. Installing...${NC}"
-        sudo apt update && sudo apt install -y python3 python3-pip || { echo -e "${RED}Failed to install Python3.${NC}"; exit 1; }
+        sudo apt update && sudo apt install -y python3 || { echo -e "${RED}Failed to install Python3.${NC}"; exit 1; }
     else
         echo -e "${CYAN}Python3 is already installed.${NC}"
     fi
 
-    # Step 2: Clone or update the repository
+    # Step 2: Install pip if not available
+    if ! command -v pip3 &>/dev/null; then
+        echo -e "${YELLOW}pip3 is not installed. Installing...${NC}"
+        sudo apt install -y python3-pip || { echo -e "${RED}Failed to install pip3.${NC}"; exit 1; }
+    else
+        echo -e "${CYAN}pip3 is already installed.${NC}"
+    fi
+
+    # Step 3: Clone or update the repository
     REPO_URL="https://github.com/primeZdev/wal_bot.git"
     REPO_DIR="wal_bot"
     if [ ! -d "$REPO_DIR" ]; then
@@ -34,7 +42,7 @@ install_wal_bot() {
 
     cd "$REPO_DIR" || { echo -e "${RED}Failed to enter the repository directory.${NC}"; exit 1; }
 
-    # Step 3: Prompt for configuration values
+    # Step 4: Prompt for configuration values
     ENV_FILE=".env"
     echo -e "${GREEN}Configuring your wal_bot...${NC}"
 
@@ -56,11 +64,12 @@ EOF
 
     echo -e "${GREEN}Configuration saved successfully to ${ENV_FILE}!${NC}"
 
-    # Step 4: Install Python requirements
+    # Step 5: Install Python requirements
     echo -e "${GREEN}Installing Python libraries...${NC}"
+    python3 -m pip install --upgrade pip
     python3 -m pip install -r requirements.txt || { echo -e "${RED}Failed to install Python libraries.${NC}"; exit 1; }
 
-    # Step 5: Create a Systemd service
+    # Step 6: Create a Systemd service
     SERVICE_FILE="/etc/systemd/system/wal_bot.service"
     sudo bash -c "cat <<EOF > ${SERVICE_FILE}
 [Unit]
@@ -77,14 +86,15 @@ Restart=always
 WantedBy=multi-user.target
 EOF"
 
-    # Step 6: Enable and start the service
+    # Step 7: Enable and start the service
     echo -e "${GREEN}Enabling and starting the wal_bot service...${NC}"
     sudo systemctl daemon-reload
     sudo systemctl enable wal_bot.service
-    sudo systemctl start wal_bot.service
+    sudo systemctl start wal_bot.service || { echo -e "${RED}Failed to start the wal_bot service.${NC}"; exit 1; }
 
     echo -e "${GREEN}Your wal_bot is now running and configured to start on boot!${NC}"
 }
+
 
 # Function: Update wal_bot
 update_wal_bot() {
