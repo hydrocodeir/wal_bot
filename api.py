@@ -23,4 +23,4 @@ headers = {
 }
 
 
-res = s.post(url=url, json=data, headers=headers, timeout=5)
+res = s.post(url=url, json=data, headers=headers, timeout=15)
