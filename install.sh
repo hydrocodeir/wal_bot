@@ -48,8 +48,8 @@ install_wal_bot() {
 
     read -rp "$(echo -e "${CYAN}Enter your Telegram Admin Chat ID: ${NC}")" ADMIN_CHAT_ID
     read -rp "$(echo -e "${CYAN}Enter your Telegram Bot Token: ${NC}")" BOT_TOKEN
-    read -rp "$(echo -e "${CYAN}Enter your Panel Address: ${NC}")" PANEL_ADDRESS
-    read -rp "$(echo -e "${CYAN}Enter your Subscription Address: ${NC}")" SUB_ADDRESS
+    read -rp "$(echo -e "${CYAN}Enter your Panel Address example: panel.example.com/fLqjAG: ${NC}")" PANEL_ADDRESS
+    read -rp "$(echo -e "${CYAN}Enter your Subscription Address example: panel.example.com/sub: ${NC}")" SUB_ADDRESS
     read -rp "$(echo -e "${CYAN}Enter your Panel Username: ${NC}")" PANEL_USER
     read -rp "$(echo -e "${CYAN}Enter your Panel Password: ${NC}")" PANEL_PASS
 
