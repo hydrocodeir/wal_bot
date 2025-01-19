@@ -508,7 +508,7 @@ def send_sub_id(message):
 # save new help message
 def save_new_help_message (message):
     if message.text == '❌ بازگشت ❌':
-        return bot.send_message(message.chat.id, "✅ عملیات ویرایش راهنما لغو شد.")
+        return bot.send_message(message.chat.id, "✅ عملیات ویرایش راهنما لغو شد.", reply_markup= main_admin_menu())
     
     new_text = message.text.strip()
     change_help_message("message.py", "HELP_MESSAGE", new_text)
