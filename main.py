@@ -514,6 +514,7 @@ def save_new_help_message (message):
     change_help_message("message.py", "HELP_MESSAGE", new_text)
 
     bot.send_message(message.chat.id, '✅متن راهنما با موفقیت تغییر یافت.')
+    os.system("systemctl restart wal_bot.service")
 
 
 
