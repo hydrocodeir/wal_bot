@@ -67,7 +67,7 @@ def message_handler (message):
     if message.text == '📘 متن راهنما':
         markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         markup.add(KeyboardButton('❌ بازگشت ❌'))
-        msg = bot.send_message(message.chat.id, 'متن راهنمای جدید را ارسال کنید:')
+        msg = bot.send_message(message.chat.id, 'متن راهنمای جدید را ارسال کنید:', reply_markup=markup)
         bot.register_next_step_handler(msg, save_new_help_message)
 
     if message.text == '👤 افزودن کاربر 👤':
@@ -513,7 +513,7 @@ def save_new_help_message (message):
     new_text = message.text.strip()
     change_help_message("message.py", "HELP_MESSAGE", new_text)
 
-    bot.send_message(message.chat.id, 'متن راهنما برای ادمین ها با موفقیت تغییر یافت✅')
+    bot.send_message(message.chat.id, '✅متن راهنما با موفقیت تغییر یافت.')
 
 
 
