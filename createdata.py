@@ -190,7 +190,7 @@ def update_admin_traffic(chat_id, delta):
         return False
 
 
-#Change help message
+# Change help message
 def change_help_message(filename, var_name, new_text):
     with open(filename, "r", encoding="utf-8") as file:
         lines = file.readlines()
