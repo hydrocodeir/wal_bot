@@ -513,7 +513,7 @@ def save_new_help_message (message):
     new_text = message.text.strip()
     change_help_message("message.py", "HELP_MESSAGE", new_text)
 
-    bot.send_message(message.chat.id, '✅متن راهنما با موفقیت تغییر یافت.')
+    bot.send_message(message.chat.id, '✅متن راهنما با موفقیت تغییر یافت.', reply_markup= main_admin_menu())
     os.system("systemctl restart wal_bot.service")
 
 
