@@ -29,7 +29,7 @@ def main_admin_menu ():
 # admins menu
 def admins_menu ():
     reply_keyboard = ReplyKeyboardMarkup(row_width=2, resize_keyboard=True, one_time_keyboard=False)
-    reply_keyboard.add('👤 افزودن کاربر 👤', '🪪 نمایش کاربران 🪪', '💎 مشخصات من 💎','❌ خارج شدن ❌')
+    reply_keyboard.add('👤 افزودن کاربر 👤', '🪪 نمایش کاربران 🪪', '💎 مشخصات من 💎','🎯 راهنما 🎯', '❌ خارج شدن ❌')
     return reply_keyboard
 
 # return button for admin
@@ -65,7 +65,12 @@ def message_handler (message):
         return admins_page(message)
     
     if message.text == '📘 متن راهنما':
-        bot.reply_to(message, '♻️ متن راهنمای برای ادمین ها در اپدیت بعد اضافه خواد شد...')
+        if str(message.chat.id) != Admin_chat_id:
+            return bot.send_message(message.chat.id, "❌ شما اجازه دسترسی ندارید.")
+        markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        markup.add(KeyboardButton('❌ بازگشت ❌'))
+        msg = bot.send_message(message.chat.id, 'متن راهنمای جدید را ارسال کنید:')
+        bot.register_next_step_handler(msg, save_new_help_message)
 
     if message.text == '👤 افزودن کاربر 👤':
         if not check_if_logged_in(chat_id):
@@ -81,6 +86,9 @@ def message_handler (message):
             return
         else:
             send_emails_(chat_id)
+
+    if message.text == '🎯 راهنما 🎯':
+        bot.reply_to(message, HELP_MESSAGE)
 
     if message.text == '❌ خارج شدن ❌':
         if check_if_logged_in(chat_id):
@@ -468,7 +476,6 @@ def send_emails_(chat_id):
 
         email_data[chat_id] = clients
 
-       
         bot.register_next_step_handler_by_chat_id(chat_id, send_sub_id)
     else:
         bot.send_message(chat_id, f"Failed to fetch user list. Status code: {get.status_code}")
@@ -497,9 +504,18 @@ def send_sub_id(message):
     email = selected_user.get("email", "Unknown")
     sub_id = selected_user.get("subId", "Sub ID not found")
 
-    bot.send_message(chat_id, f"👤 نام کاربری: {email}\n\n🔑 لینک سابسکریپشن: https://{sub}/{sub_id}", reply_markup=admins_menu())  # نمایش منوی ادمینز
+    bot.send_message(chat_id, f"👤 نام کاربری: {email}\n\n🔑 لینک سابسکریپشن: https://{sub}/{sub_id}", reply_markup=admins_menu())
 
 
+# save new help message
+def save_new_help_message (message):
+    if message.text == '❌ بازگشت ❌':
+        return bot.send_message(message.chat.id, "✅ عملیات ویرایش راهنما لغو شد.")
+    
+    new_text = message.text.strip()
+    change_help_message("message.py", "HELP_MESSAGE", new_text)
+
+    bot.send_message(message.chat.id, 'متن راهنما برای ادمین ها با موفقیت تغییر یافت✅')
 
 
 
