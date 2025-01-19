@@ -65,8 +65,6 @@ def message_handler (message):
         return admins_page(message)
     
     if message.text == '📘 متن راهنما':
-        if str(message.chat.id) != Admin_chat_id:
-            return bot.send_message(message.chat.id, "❌ شما اجازه دسترسی ندارید.")
         markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         markup.add(KeyboardButton('❌ بازگشت ❌'))
         msg = bot.send_message(message.chat.id, 'متن راهنمای جدید را ارسال کنید:')
