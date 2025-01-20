@@ -337,7 +337,9 @@ def add_user_step3(message):
             if gb > admin_traffic:
                 bot.send_message(chat_id, f"❌ ترافیک کافی برای ایجاد کاربر ندارید. (ترافیک شما: {admin_traffic} GB)")
                 return
-
+            if admin_traffic < 100:
+                bot.send_message(chat_id, '⚠️توجه داشته باشید که ترافیک باقی مانده شما جهت ساخت یوزر کمتر از 100 گیگ میباشد')
+                
             if update_admin_traffic(chat_id, -gb):
                 user_gb[chat_id] = gb
                 add_user_f(chat_id)
