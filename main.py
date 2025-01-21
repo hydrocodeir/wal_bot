@@ -343,8 +343,6 @@ def add_user_step3(message):
                     "❗ لطفاً بررسی کنید."
 
                 bot.send_message(chat_id, warning_text, parse_mode="Markdown")
-
-                bot.send_message(chat_id, '⚠️توجه داشته باشید که ترافیک باقی مانده شما جهت ساخت یوزر کمتر از 100 گیگ میباشد')
                 
             if update_admin_traffic(chat_id, -gb):
                 user_gb[chat_id] = gb
