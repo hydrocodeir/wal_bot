@@ -6,6 +6,7 @@ import secrets
 import string
 import os
 import time
+import segno
 from createdata import *
 from message import *
 from telebot import TeleBot, types
@@ -122,16 +123,17 @@ def admins_page(message):
         bot.reply_to(message, "❌ هیچ ادمینی ثبت نشده است.", reply_markup=markup)
         return
 
-    response = "🧑🏻‍💻 لیست ادمین‌ها:\n\n"
+    response = "🧑🏻‍💻* لیست ادمین‌ها:*\n\n"
     for admin in admins:
         response += (
-            f"👤 یوزرنیم: {admin['user_name']}\n"
+            f"```\n👤 یوزرنیم: {admin['user_name']}```\n"
             f"📊 ترافیک باقی‌مانده: {admin['traffic']} GB\n"
             f"🔢 اینباند درحال استفاده: {admin['inb_id']}\n"
-            f"------------------------\n"
+            f"\n"
         )
 
-    bot.reply_to(message, response, reply_markup=markup)
+
+    bot.reply_to(message, response, parse_mode='markdown', reply_markup=markup)
 
 #callback handler
 @bot.callback_query_handler(func=lambda call: True)
@@ -399,15 +401,20 @@ def add_user_f(chat_id):
     res2 = s.post(add, proces)
 
     if res2.status_code == 200:
-
-        bot.send_message(chat_id, 
-                        f"کاربر باموفقیت ساخته شد ✅\n\n"
-                        f"👤: {user_email[chat_id]}\n"
-                        f"⌛: {user_days[chat_id]}\n"
-                        f"🔋: {gb} GB\n-----------\n"
-                        f"لینک سابسکریپشن کاربر 👇 \n\nhttps://{sub}/{sub_id}")
+        sub_url = f'https://{sub}/{sub_id}'
+        qr = sub_url
+        img = segno.make(qr)
+        img.save('last_qrcode.png', scale=10, dark='darkblue', data_dark='steelblue')
+        img_path = 'last_qrcode.png'
+        caption_text = (
+            f"🪪*نام کاربری:*  {user_email[chat_id]}\n"
+            f"⌛*تعداد روز:*  {user_days[chat_id]}\n"
+            f"🔋*سقف ترافیک:*  {gb} GB\n\n"
+            f"🔗*لینک سابسکریپشن:*\n"
+            f"```\n{sub_url}\n```")
         
-        bot.send_message(chat_id, START_FOR_ADMINS, reply_markup=admins_menu())
+        with open(img_path, 'rb') as photo:
+            bot.send_photo(chat_id, photo, caption=caption_text, parse_mode="MarkdownV2", reply_markup=admins_menu())
 
         clear_user_data(chat_id)
     else:
@@ -461,7 +468,14 @@ def send_emails_(chat_id):
             bot.send_message(chat_id, "No users found.")
             return
 
-        user_list = "📋 لیست یوزرها:\n\n"
+        number_to_emoji = {
+            0: '0️⃣', 1: '1️⃣', 2: '2️⃣', 3: '3️⃣', 4: '4️⃣',
+            5: '5️⃣', 6: '6️⃣', 7: '7️⃣', 8: '8️⃣', 9: '9️⃣'
+        }
+        def number_to_emoji_string(number):
+            return ''.join(number_to_emoji[int(digit)] for digit in str(number))
+
+        user_list = "📋* لیست کاربران:*\n\n"
         for index, client in enumerate(clients, start=1):
             email = client.get("email", "Unknown")
             expiry_time = client.get("expiryTime", 0)
@@ -472,11 +486,17 @@ def send_emails_(chat_id):
                 remaining_time_ms = expiry_time - current_time
                 if remaining_time_ms > 0:
                     remaining_days = int(remaining_time_ms / (1000 * 60 * 60 * 24))
+            
+            user_list += "```"
+            index_emoji = number_to_emoji_string(index)
+            user_list += f"\n{index_emoji}| 👤 {email}   (⌛ = {remaining_days}) \n\n"
+            user_list += "```"
+            if len(user_list) > 3500:
+                bot.send_message(chat_id, user_list, parse_mode="Markdown", reply_markup=cancel_button())
+                user_list = ""
 
-            user_list += f"{index}️⃣ 👤 :{email}  |  روزهای باقی مانده: {remaining_days}\n\n"
-
-        user_list += "\n📩 عدد یوزر مورد نظر رو جهت دریافت لینک ساب وارد:"
-        bot.send_message(chat_id, user_list, reply_markup=cancel_button())
+        user_list += "\n📩 شماره کاربر مورد نظر رو جهت دریافت اطلاعات وارد کنید:"
+        bot.send_message(chat_id, user_list, parse_mode="Markdown", reply_markup=cancel_button())
 
         email_data[chat_id] = clients
 
@@ -508,8 +528,47 @@ def send_sub_id(message):
     email = selected_user.get("email", "Unknown")
     sub_id = selected_user.get("subId", "Sub ID not found")
 
-    bot.send_message(chat_id, f"👤 نام کاربری: {email}\n\n🔑 لینک سابسکریپشن: https://{sub}/{sub_id}", reply_markup=admins_menu())
+    url = f"https://{panel}/panel/api/inbounds/getClientTraffics/{email}"
+    get = s.get(url=url, headers=headers)
 
+    if get.status_code == 200:
+        response = get.json()
+        sub_url = f'https://{sub}/{sub_id}'
+        qr = sub_url
+        img = segno.make(qr)
+        img.save('last_qrcode.png', scale=10, dark='darkblue', data_dark='steelblue')
+        img_path = 'last_qrcode.png'
+
+        obj = response.get('obj', {})
+        user_id = obj.get('id')
+        #status = obj.get('enable')
+        uploaded = obj.get('up')
+        downloaded = obj.get('down')
+        expiry_time = obj.get('expiryTime')
+        total_bytes = obj.get('total')
+
+        usage_traffic = (uploaded + downloaded) / (1024 ** 3)
+        total_traffic = total_bytes / (1024 ** 3)
+
+        #expiry_time
+        expiry_time_s = expiry_time / 1000
+        expiry_date = datetime.datetime.fromtimestamp(expiry_time_s)
+        current_time = datetime.datetime.now()
+        remaining_time = expiry_date - current_time
+        remaining_days = remaining_time.days
+
+
+        caption_text = (
+        f"🪪 *نام کاربری:*  {email}\n"
+        f"⌛ *روزهای باقی مانده:*  {remaining_days}\n"
+        f"🔋 *ترافیک مصرف شده:*  {usage_traffic:.2f} GB\n"
+        f"📦 *کل ترافیک:*  {total_traffic:.2f} GB\n\n"
+        f"🔗 *لینک سابسکریپشن:*\n"
+        f"```\n{sub_url}\n```"
+    )
+
+        with open(img_path, 'rb') as photo:
+            bot.send_photo(chat_id, photo, caption=caption_text, parse_mode="Markdown", reply_markup=admins_menu())
 
 # save new help message
 def save_new_help_message (message):
@@ -521,6 +580,7 @@ def save_new_help_message (message):
 
     bot.send_message(message.chat.id, '✅متن راهنما با موفقیت تغییر یافت.', reply_markup= main_admin_menu())
     os.system("systemctl restart wal_bot.service")
+
 
 
 
