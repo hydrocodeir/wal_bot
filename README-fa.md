@@ -38,11 +38,11 @@
 ```bash
 bash <(curl -Ls https://raw.githubusercontent.com/primeZdev/wal_bot/main/install.sh)
 ```
----
+
 <br>
 <p align="center">
   <a href="https://t.me/primez_dev">
-    <img src="https://img.shields.io/badge/Telegram-برای_آخرین_خبرها-blue?style=flat-square&logo=telegram" alt="Telegram">
+    <img src="https://img.shields.io/badge/Telegram-Last news-blue?style=flat-square&logo=telegram" alt="Telegram">
   </a>
 </p>
 
