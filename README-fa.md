@@ -1,7 +1,7 @@
 <p align="center">
   <img width="300px" src="./media/wal_bot.png" alt="Wal Bot">
   <h1 align="center">Wal Bot - وال بات</h1>
-  <p align="center">یک ربات برای مدیریت نمایندگان در پنل سنایی</p>
+  <p align="center"><b>یک ربات برای مدیریت نمایندگان در پنل سنایی</b></p>
 </p>
 
 <p align="center">
