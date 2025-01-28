@@ -5,8 +5,10 @@
 </p>
 
 <p align="center">
-  <a href="https://t.me/primez_dev">
-    <img src="https://img.shields.io/badge/Telegram-Join-blue?style=flat-square&logo=telegram" alt="Telegram">
+  <a href="https://t.me/primez_dev" style="text-decoration:none;">
+    <button style="background-color: #0088cc; color: white; border: none; padding: 10px 20px; font-size: 16px; cursor: pointer;">
+      Telegram
+    </button>
   </a>
 </p>
 
@@ -21,7 +23,7 @@
 &nbsp;&nbsp;&nbsp;&nbsp;🔹 افزودن ترافیک و تغییر اینباند یک نماینده.
 
 ### 💠 **پنل نمایندگان**
-&nbsp;&nbsp;&nbsp;&nbsp;🔹  ساخت یوزر و دریافت لینک ساب.<br>
+&nbsp;&nbsp;&nbsp;&nbsp;🔹  ساخت/تمدید یوزر و دریافت لینک ساب.<br>
 &nbsp;&nbsp;&nbsp;&nbsp;🔹 نمایش یوزر های ساخته شده بهمراه اطلاعات.<br>
 &nbsp;&nbsp;&nbsp;&nbsp;🔹 نمایش حجم باقی مانده جهت ساخت یوزر.<br>
 &nbsp;&nbsp;&nbsp;&nbsp;🔹 متن راهنما (توسط ادمین اصلی نوشته شده)
@@ -51,4 +53,4 @@ bash <(curl -Ls https://raw.githubusercontent.com/primeZdev/wal_bot/main/install
 ## ⭐ حمایت از پروژه
 > **فراموش نکنید که با دادن استار (⭐) از این پروژه حمایت کنید!**  
 
-[![Star History Chart](https://api.star-history.com/svg?repos=primeZdev/wal_bot&type=Date)](https://star-history.com/#primeZdev/wal_bot&Date)
+[![Stargazers over time](https://starchart.cc/primeZdev/wal_bot.svg?variant=adaptive)](https://starchart.cc/primeZdev/wal_bot)

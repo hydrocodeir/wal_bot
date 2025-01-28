@@ -7,6 +7,7 @@ import string
 import os
 import time
 import segno
+import random
 from createdata import *
 from message import *
 from telebot import TeleBot, types
@@ -30,14 +31,9 @@ def main_admin_menu ():
 # admins menu
 def admins_menu ():
     reply_keyboard = ReplyKeyboardMarkup(row_width=2, resize_keyboard=True, one_time_keyboard=False)
-    reply_keyboard.add('👤 افزودن کاربر 👤', '🪪 نمایش کاربران 🪪', '💎 مشخصات من 💎','🎯 راهنما 🎯', '❌ خارج شدن ❌')
+    reply_keyboard.add('👤 افزودن کاربر 👤', '🪪 نمایش کاربران 🪪', '💎 مشخصات من 💎','⌛ تمدید کاربر ⌛','🎯 راهنما 🎯', '❌ خارج شدن ❌')
     return reply_keyboard
 
-# return button for admin
-def return_button_admin ():
-    reply_keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
-    reply_keyboard.add('♻️ بازگشت ♻️')
-    return reply_keyboard
 
 
 # start message
@@ -46,7 +42,7 @@ def return_button_admin ():
 def start_message (message):
     chat_id = message.chat.id
     if chat_id == Admin_chat_id:
-        bot.send_message(message.chat.id, STRART_FOR_MAIN_ADMIN, reply_markup = main_admin_menu())
+        bot.send_message(message.chat.id, f'*{STRART_FOR_MAIN_ADMIN}*',parse_mode='markdown', reply_markup = main_admin_menu())
     else:
         markup = InlineKeyboardMarkup(row_width=1)
         button1 = InlineKeyboardButton(text="👤 Login 👤", callback_data="login")
@@ -68,7 +64,7 @@ def message_handler (message):
     if message.text == '📘 متن راهنما':
         markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         markup.add(KeyboardButton('❌ بازگشت ❌'))
-        msg = bot.send_message(message.chat.id, 'متن راهنمای جدید را ارسال کنید:', reply_markup=markup)
+        msg = bot.send_message(message.chat.id, f'*📘متن قبلی:\n{HELP_MESSAGE}*\n\n ♻️لطفا متن جدید خود را وارد کنید:',parse_mode='markdown', reply_markup=markup)
         bot.register_next_step_handler(msg, save_new_help_message)
 
     if message.text == '👤 افزودن کاربر 👤':
@@ -86,8 +82,18 @@ def message_handler (message):
         else:
             send_emails_(chat_id)
 
+    if message.text == '⌛ تمدید کاربر ⌛':
+        if not check_if_logged_in(chat_id):
+            bot.send_message(chat_id, "❌ شما وارد نشده‌اید. لطفاً وارد شوید.", reply_markup=markup)
+            return
+        else:
+            markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+            markup.add(KeyboardButton('❌ بازگشت ❌'))
+            msg = bot.send_message(message.chat.id, f'*{RENEW_USER}*', parse_mode="markdown",  reply_markup=markup)
+            bot.register_next_step_handler(msg, renew_user_step1)
+
     if message.text == '🎯 راهنما 🎯':
-        bot.reply_to(message, HELP_MESSAGE)
+        bot.reply_to(message, f'*{HELP_MESSAGE}*',parse_mode='markdown', reply_markup=admins_menu())
 
     if message.text == '❌ خارج شدن ❌':
         if check_if_logged_in(chat_id):
@@ -104,6 +110,10 @@ def message_handler (message):
             return
         else:
             get_admin_info(chat_id)
+
+
+
+        
 
         
 
@@ -162,6 +172,9 @@ def callback_handler (call):
 
     if call.data == 'cancel':
         bot.edit_message_text(text=START_FOR_ADMINS, chat_id=chat_id, message_id=message_id, reply_markup=admins_menu)
+
+
+
         
 
 
@@ -255,7 +268,7 @@ def Del_admin(message):
         try:
             user_name = message.text
             delete_admin(user_name)
-            bot.send_message(message.chat.id, f"ادمین با یوزرنیم: {user_name} \n✅ حذف شد ", reply_markup=main_admin_menu())
+            bot.send_message(message.chat.id, f"*✅ ادمین با یوزرنیم: {user_name}، حذف شد *",parse_mode='markdown', reply_markup=main_admin_menu())
         except Exception as e:
             bot.send_message(message.chat.id, f"An error occurred: {e}")
 
@@ -277,7 +290,7 @@ def login_step2(message, user_name):
             chat_id = message.chat.id
             if login_user(user_name, password, chat_id) and save_admin_login(chat_id, user_name):
                 bot.send_message(message.chat.id, '👑 خوش آمدید! وارد سیستم شدید.')
-                bot.send_message(message.chat.id, START_FOR_ADMINS, reply_markup=admins_menu())
+                bot.send_message(message.chat.id, f'*{START_FOR_ADMINS}*',parse_mode='markdown', reply_markup=admins_menu())
             else:
                 bot.send_message(message.chat.id, '❌  /start .پسورد یا نام کاربری اشتباه است.')
         except ValueError:
@@ -300,7 +313,8 @@ def add_user_step1(message):
         try:
             chat_id = message.chat.id
             email = str(message.text).strip()
-            user_email[chat_id] = email
+            random_numb = random.randint(10, 99)
+            user_email[chat_id] = f'{email}{random_numb}'
             bot.send_message(chat_id, ADD_DAYS)
             bot.register_next_step_handler(message, add_user_step2)
         except Exception as e:
@@ -444,7 +458,7 @@ email_data={}
 
 def cancel_button():
     markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-    markup.add(KeyboardButton("❌ کنسل"))
+    markup.add(KeyboardButton('❌ بازگشت ❌'))
     return markup
 
 
@@ -508,7 +522,7 @@ def send_emails_(chat_id):
 def send_sub_id(message):
     chat_id = message.chat.id
 
-    if message.text == "❌ کنسل":
+    if message.text == "❌ بازگشت ❌":
         bot.send_message(chat_id, "✅ عملیات لغو شد.", reply_markup=admins_menu())
         return
 
@@ -569,6 +583,127 @@ def send_sub_id(message):
 
         with open(img_path, 'rb') as photo:
             bot.send_photo(chat_id, photo, caption=caption_text, parse_mode="Markdown", reply_markup=admins_menu())
+
+
+# renew user
+def renew_user_step1(message):
+    if message.text.strip() in ['❌ بازگشت ❌']:
+        bot.send_message(message.chat.id, "✅ عملیات لغو شد!", reply_markup=admins_menu())
+        return 
+    
+    email = message.text
+    chat_id = message.chat.id
+
+    url = f"https://{panel}/panel/api/inbounds/getClientTraffics/{email}"
+    get = s.get(url=url, headers=headers)
+
+    if get.status_code == 200:
+        try:
+            response = get.json()
+        except Exception as e:
+            bot.send_message(chat_id, "❌ خطا در پردازش پاسخ از سرور!", parse_mode="markdown", reply_markup=admins_menu())
+            return
+
+        obj = response.get('obj')
+        if obj is None:
+            bot.send_message(chat_id, "❌ کاربر یافت نشد یا اطلاعات نامعتبر است!", parse_mode="markdown", reply_markup=admins_menu())
+            return
+
+        gb = obj.get('total', 0) / (1024 ** 3)
+        admin_traffic = get_admin_traffic(chat_id)
+
+        if gb > admin_traffic:
+            bot.send_message(chat_id, f"❌ ترافیک کافی برای ایجاد کاربر ندارید. (ترافیک شما: {admin_traffic} GB)", reply_markup=admins_menu())
+            return
+        
+        if admin_traffic < 100:
+            warning_text = "⚠️ *هشدار مهم*\n\n" \
+                "🚨 *ترافیک باقی‌مانده شما کمتر از 100 گیگ است!*\n" \
+                "❗ لطفاً بررسی کنید."
+            bot.send_message(chat_id, warning_text, parse_mode="Markdown")
+                
+        if update_admin_traffic(chat_id, -gb):
+            inb_id = get_inb_id(chat_id)
+            url = f"https://{panel}/panel/api/inbounds/{inb_id}/resetClientTraffic/{email}"
+            response = s.post(url=url, headers=headers)
+
+            if response.status_code == 200:
+                bot.send_message(chat_id, "*✅ ترافیک کاربر ریست شد، حالا تعداد روز تمدید رو واردکنید:*", parse_mode="markdown")
+                bot.register_next_step_handler(message, lambda msg: renew_user_step2(msg, email))
+    else:
+        bot.send_message(chat_id, "*❌ درخواست با خطا مواجه شد، لطفاً بعداً تلاش کنید!*", parse_mode="markdown", reply_markup=admins_menu())
+
+
+# renew user step2
+def renew_user_step2(message, email):
+    if message.text.strip() in ['❌ بازگشت ❌']:
+        bot.send_message(message.chat.id, "✅ عملیات لغو شد!", reply_markup=admins_menu())
+        return 
+
+    try:
+        days = int(message.text)
+    except ValueError:
+        bot.send_message(message.chat.id, "❌ لطفاً یک عدد معتبر وارد کنید.", reply_markup=admins_menu())
+        return
+
+    chat_id = message.chat.id
+    expiry_time = int((datetime.datetime.now() + datetime.timedelta(days=days)).timestamp() * 1000)
+    url = f"https://{panel}/panel/api/inbounds/getClientTraffics/{email}"
+    get = s.get(url=url, headers=headers)
+
+    if get.status_code == 200:
+        inb_id = get_inb_id(chat_id)
+        url = f"https://{panel}/panel/api/inbounds/get/{inb_id}"
+        response = s.get(url=url, headers=headers)
+
+        if response.status_code == 200:
+            data = response.json()
+            settings = json.loads(data["obj"]["settings"])
+            clients = settings["clients"]
+
+            for client in clients:
+                if client['email'] == email:
+                    id = client['id']
+                    total_gb = client['totalGB']
+                    sub_id = client['subId']
+                    break
+
+            settings = {
+                "clients": [{
+                    "id": id,
+                    "enable": True,
+                    "flow": "",
+                    "email": email,
+                    "imitIp": "",
+                    "totalGB": total_gb,
+                    "expiryTime": expiry_time,
+                    "tgId": "",
+                    "subId": sub_id,
+                    "reset": ""
+                }]
+            }
+
+            proces = {
+                "id": inb_id,
+                "settings": json.dumps(settings)
+            }
+
+            url = f"https://{panel}/panel/api/inbounds/updateClient/{id}"
+            res = s.post(url=url, headers=headers, data=proces)
+
+            if res.status_code == 200:
+                bot.send_message(chat_id, f'*✅ اشتراک کاربر: {email}، با موفقیت تمدید شد*', parse_mode='markdown', reply_markup=admins_menu())
+            else:
+                bot.send_message(chat_id, f'*❌ خطا در تمدید: {res.status_code}*', parse_mode='markdown', reply_markup=admins_menu())
+        else:
+            bot.send_message(chat_id, f'*❌ خطا در دریافت اطلاعات کلاینت: {response.status_code}*', parse_mode='markdown', reply_markup=admins_menu())
+    else:
+        bot.send_message(chat_id, f'*❌ خطا در دریافت `inb_id`: {get.status_code}*', parse_mode='markdown', reply_markup=admins_menu())
+
+
+
+
+
 
 # save new help message
 def save_new_help_message (message):
