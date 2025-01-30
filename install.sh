@@ -62,6 +62,12 @@ PANEL_USER=${PANEL_USER}
 PANEL_PASS=${PANEL_PASS}
 EOF
 
+
+
+
+
+
+
     echo -e "${GREEN}Configuration saved successfully to ${ENV_FILE}!${NC}"
 
     # Step 5: Install Python requirements
@@ -79,7 +85,7 @@ After=network.target
 [Service]
 User=$(whoami)
 WorkingDirectory=$(pwd)
-ExecStart=/usr/bin/python3 $(pwd)/srs/bot.py
+ExecStart=/usr/bin/python3 $(pwd)/src/bot.py
 Restart=always
 
 [Install]
