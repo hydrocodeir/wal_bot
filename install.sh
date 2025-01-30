@@ -79,7 +79,7 @@ After=network.target
 [Service]
 User=$(whoami)
 WorkingDirectory=$(pwd)
-ExecStart=/usr/bin/python3 $(pwd)/main.py
+ExecStart=/usr/bin/python3 $(pwd)/srs/bot.py
 Restart=always
 
 [Install]
