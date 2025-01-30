@@ -43,7 +43,7 @@ install_wal_bot() {
     cd "$REPO_DIR" || { echo -e "${RED}Failed to enter the repository directory.${NC}"; exit 1; }
 
     # Step 4: Prompt for configuration values
-    ENV_FILE=".env"
+    ENV_FILE="src/.env"
     echo -e "${GREEN}Configuring your wal_bot...${NC}"
 
     read -rp "$(echo -e "${CYAN}Enter your Telegram Admin Chat ID: ${NC}")" ADMIN_CHAT_ID
@@ -123,7 +123,8 @@ remove_wal_bot() {
 
 # Main menu
 while true; do
-    echo -e "\n${CYAN}==== Wal Bot Manager ====${NC}"
+    echo -e "\n${CYAN}====> Wal Bot <====${NC}"
+    echo -e "${CYAN}==== @primez_dev ====${NC}\n"
     echo -e "${GREEN}1. Install wal bot${NC}"
     echo -e "${YELLOW}2. Update wal bot${NC}"
     echo -e "${RED}3. Remove wal bot${NC}"

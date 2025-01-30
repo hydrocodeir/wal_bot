@@ -8,8 +8,8 @@ import os
 import time
 import segno
 import random
-from createdata import *
-from message import *
+from db.query import *
+from messages import *
 from telebot import TeleBot, types
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 from dotenv import load_dotenv
@@ -18,8 +18,11 @@ from api import *
 load_dotenv()
 
 
+
 bot = TeleBot(os.getenv("BOT_TOKEN"))
 Admin_chat_id = int(os.getenv("ADMIN_CHAT_ID"))
+
+
 # main admin menu
 def main_admin_menu ():
     reply_keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False,row_width=2)
@@ -31,7 +34,7 @@ def main_admin_menu ():
 # admins menu
 def admins_menu ():
     reply_keyboard = ReplyKeyboardMarkup(row_width=2, resize_keyboard=True, one_time_keyboard=False)
-    reply_keyboard.add('👤 افزودن کاربر 👤', '🪪 نمایش کاربران 🪪', '💎 مشخصات من 💎','⌛ تمدید کاربر ⌛','🎯 راهنما 🎯', '❌ خارج شدن ❌')
+    reply_keyboard.add('👤 افزودن کاربر 👤', '🪪 نمایش کاربران 🪪', '💎 مشخصات من 💎','⌛ تمدید کاربر ⌛','🎯 راهنما 🎯', '🗑️ حذف کاربر 🗑️', '❌ خارج شدن ❌')
     return reply_keyboard
 
 
@@ -72,7 +75,9 @@ def message_handler (message):
             bot.send_message(chat_id, "❌ شما وارد نشده‌اید. لطفاً وارد شوید.", reply_markup=markup)
             return
         else:
-            bot.send_message(chat_id, ADD_EMAIL , reply_markup=admins_menu())
+            markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+            markup.add(KeyboardButton('❌ بازگشت ❌'))
+            bot.send_message(chat_id, ADD_EMAIL , reply_markup=markup)
             bot.register_next_step_handler(message, lambda msg: add_user_step1(msg))
 
     if message.text == '🪪 نمایش کاربران 🪪':
@@ -94,6 +99,12 @@ def message_handler (message):
 
     if message.text == '🎯 راهنما 🎯':
         bot.reply_to(message, f'*{HELP_MESSAGE}*',parse_mode='markdown', reply_markup=admins_menu())
+
+    if message.text == '🗑️ حذف کاربر 🗑️':
+        markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        markup.add(KeyboardButton('❌ بازگشت ❌'))
+        msg = bot.send_message(message.chat.id, '⚠️نام کاربر مورد نظر رو جهت حذف کاربر ارسال کنید:', reply_markup=markup)
+        bot.register_next_step_handler(msg, delete_user_step1)
 
     if message.text == '❌ خارج شدن ❌':
         if check_if_logged_in(chat_id):
@@ -170,8 +181,22 @@ def callback_handler (call):
         bot.edit_message_text(text='لطفا یوزرنیم خود را وارد کنید:',chat_id=chat_id, message_id=message_id)
         bot.register_next_step_handler(call.message, login_step1)
 
+    if call.data.startswith("del_"):
+        email = call.data.split("_")[1]
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+        delete_user_step2(call,email)
+
     if call.data == 'cancel':
-        bot.edit_message_text(text=START_FOR_ADMINS, chat_id=chat_id, message_id=message_id, reply_markup=admins_menu)
+        try:
+            bot.delete_message(chat_id, message_id)
+        except:
+            pass
+
+        bot.send_message(chat_id, text="✅ عملیات لغو شد!", reply_markup=admins_menu())
+        
+
+
+
 
 
 
@@ -309,7 +334,9 @@ user_days = {}
 user_gb = {}
 
 def add_user_step1(message):
-    if message.content_type == 'text':
+    if message.text == '❌ بازگشت ❌':
+        return bot.send_message(message.chat.id, "✅ عملیات ویرایش راهنما لغو شد.", reply_markup= admins_menu())
+    else:
         try:
             chat_id = message.chat.id
             email = str(message.text).strip()
@@ -322,7 +349,9 @@ def add_user_step1(message):
 
 
 def add_user_step2(message):
-    if message.content_type == 'text':
+    if message.text == '❌ بازگشت ❌':
+        return bot.send_message(message.chat.id, "✅ عملیات ویرایش راهنما لغو شد.", reply_markup= admins_menu())
+    else:
         chat_id = message.chat.id
         try:
             days = int(message.text)
@@ -335,7 +364,9 @@ def add_user_step2(message):
 
 
 def add_user_step3(message):
-    if message.content_type == 'text':
+    if message.text == '❌ بازگشت ❌':
+        return bot.send_message(message.chat.id, "✅ عملیات ویرایش راهنما لغو شد.", reply_markup= admins_menu())
+    else:
         chat_id = message.chat.id
         try:
             gb = int(message.text)
@@ -700,7 +731,85 @@ def renew_user_step2(message, email):
     else:
         bot.send_message(chat_id, f'*❌ خطا در دریافت `inb_id`: {get.status_code}*', parse_mode='markdown', reply_markup=admins_menu())
 
+# get users uuid and...
+def get_users_info_by_email(email, chat_id):
+        inb_id = get_inb_id(chat_id)
 
+        url = f"https://{panel}/panel/api/inbounds/get/{inb_id}"
+        response = s.get(url=url, headers=headers)
+
+        if response.status_code == 200:
+            data = response.json()
+
+            if data.get("obj") is not None and "settings" in data["obj"]:
+                settings = json.loads(data["obj"]["settings"])
+                clients = settings.get("clients", [])
+
+
+                for client in clients:
+                    if client.get("email") == email:
+                        user_id = client.get("id")
+                        # total_gb = client.get("totalGB")
+                        # sub_id = client.get("subId")
+                        return user_id
+
+
+                return "not_found"
+
+
+
+# delete user
+def delete_user_step1(message):
+    chat_id = message.chat.id
+    if message.text == '❌ بازگشت ❌':
+        bot.send_message(message.chat.id, "✅ عملیات لغو شد!", reply_markup=admins_menu())
+        return
+    
+    else:
+        email = message.text
+        callback_data = f"del_{email}"
+
+        markup = InlineKeyboardMarkup(row_width=1)
+        button1 = InlineKeyboardButton(text="✅ تایید ✅", callback_data=callback_data)
+        button2 = InlineKeyboardButton(text='❌ لغو ❌', callback_data="cancel")
+        markup.add(button1, button2)
+        bot.send_message(chat_id,f'*⚠️شما درحال حذف [ {email} ] هستید.\nتایید میکنید؟*', parse_mode='markdown', reply_markup=markup)
+
+
+
+def delete_user_step2(call, email):
+    chat_id = call.message.chat.id
+    message_id = call.message.message_id
+
+    user_id = get_users_info_by_email(email, chat_id)
+    inb_id = get_inb_id(chat_id)
+    url = f"https://{panel}/panel/api/inbounds/{inb_id}/delClient/{user_id}"
+
+    response = s.post(url=url, headers=headers)
+
+    try:
+        bot.delete_message(chat_id, message_id)
+    except:
+        pass
+        
+
+    
+    if user_id == "not_found":
+        bot.send_message(
+            chat_id=chat_id,
+            text='*❌ خطا در دریافت اطلاعات کاربر.\n(کاربر وجود ندارد)*',
+            parse_mode='markdown',
+            reply_markup=admins_menu()
+        )
+        return
+    else:
+        if response.status_code == 200:
+            bot.send_message(
+                chat_id=chat_id,
+                text=f'*✅ کاربر {email} با موفقیت حذف شد.*',
+                parse_mode='markdown',
+                reply_markup=admins_menu()
+            )
 
 
 
@@ -715,10 +824,6 @@ def save_new_help_message (message):
 
     bot.send_message(message.chat.id, '✅متن راهنما با موفقیت تغییر یافت.', reply_markup= main_admin_menu())
     os.system("systemctl restart wal_bot.service")
-
-
-
-
 
 
 
