@@ -1,14 +1,23 @@
 
 # Change help message
-def change_help_message(filename, var_name, new_text):
-    with open(filename, "r", encoding="utf-8") as file:
+def change_help_message(new_text):
+    file_path = "src/messages.py"
+
+    with open(file_path, "r", encoding="utf-8") as file:
         lines = file.readlines()
 
-    with open(filename, "w", encoding="utf-8") as file:
-        for line in lines:
-            if line.startswith(var_name):
-                file.write(f'{var_name} = """{new_text}"""\n')
-            else:
-                file.write(line)
+    found = False 
 
+    try:
+        with open(file_path, "w", encoding="utf-8") as file:
+            for line in lines:
+                if line.startswith("HELP_MESSAGE"):
+                    file.write(f'HELP_MESSAGE = """{new_text}"""\n')
+                    found = True
+                else:
+                    file.write(line)
 
+        return found
+    
+    except Exception as e:
+        return False

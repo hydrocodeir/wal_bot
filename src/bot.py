@@ -4,7 +4,7 @@ from telebot import TeleBot, types
 from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
 from dotenv import load_dotenv
 from api import *
-from utils import *
+from utils import change_help_message
 import uuid
 import requests
 import json
@@ -825,10 +825,12 @@ def save_new_help_message (message):
         return bot.send_message(message.chat.id, "✅ عملیات ویرایش راهنما لغو شد.", reply_markup= main_admin_menu())
     
     new_text = message.text.strip()
-    change_help_message("message.py", "HELP_MESSAGE", new_text)
+    if change_help_message(new_text):
+        bot.send_message(message.chat.id, '✅متن راهنما با موفقیت تغییر یافت.', reply_markup= main_admin_menu())
+        os.system("systemctl restart wal_bot.service")
+    else:
+        bot.send_message(message.chat.id, 'خطا هنگام نوشتن در فایل', reply_markup= main_admin_menu())
 
-    bot.send_message(message.chat.id, '✅متن راهنما با موفقیت تغییر یافت.', reply_markup= main_admin_menu())
-    os.system("systemctl restart wal_bot.service")
 
 
 
