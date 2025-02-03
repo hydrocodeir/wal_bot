@@ -106,14 +106,12 @@ def message_handler (message):
         msg = bot.send_message(message.chat.id, '⚠️نام کاربر مورد نظر رو جهت حذف کاربر ارسال کنید:', reply_markup=markup)
         bot.register_next_step_handler(msg, delete_user_step1)
 
-    # if message.text == '❌ خارج شدن ❌':
-    #     if check_if_logged_in(chat_id):
-    #         logout_user(chat_id)
-    #         bot.send_message(message.chat.id, '❌ شما از پنل مدیریتی خود خارج شدید ، جهت استفاده مجدد لاگین کنید:', reply_markup=markup)
-    #         logout_user(chat_id)
-    #         return
-    #     else:
-    #         pass
+    if message.text == '❌ خارج شدن ❌':
+        if admins_query.remove_chat_id(chat_id):
+            bot.send_message(message.chat.id, '❌ شما از پنل مدیریتی خود خارج شدید ، جهت استفاده مجدد لاگین کنید:', reply_markup=markup)
+            return
+        else:
+            pass
         
     if message.text == "💎 مشخصات من 💎":
         if not admins_query.admin_approval(chat_id):
