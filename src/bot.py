@@ -379,12 +379,11 @@ def add_user_step3(message):
                 return
             
             if gb > admin_traffic:
-                bot.send_message(chat_id, f"❌ ترافیک کافی برای ایجاد کاربر ندارید. (ترافیک شما: {admin_traffic} GB)")
+                bot.send_message(chat_id, f"❌ ترافیک کافی برای ایجاد کاربر ندارید. (ترافیک شما: {admin_traffic} GB)", reply_markup=admins_menu())
                 return
             if admin_traffic < 100:
                 warning_text = "⚠️ *هشدار مهم*\n\n" \
                     "🚨 *ترافیک باقی‌مانده شما کمتر از 100 گیگ است!*\n" \
-                    "❗ لطفاً بررسی کنید."
 
                 bot.send_message(chat_id, warning_text, parse_mode="Markdown")
                 
@@ -449,15 +448,16 @@ def add_user_f(chat_id):
         img = segno.make(qr)
         img.save('last_qrcode.png', scale=10, dark='darkblue', data_dark='steelblue')
         img_path = 'last_qrcode.png'
+
         caption_text = (
-            f"🪪*نام کاربری:*  {user_email[chat_id]}\n"
-            f"⌛*تعداد روز:*  {user_days[chat_id]}\n"
-            f"🔋*سقف ترافیک:*  {gb} GB\n\n"
-            f"🔗*لینک سابسکریپشن:*\n"
-            f"```\n{sub_url}\n```")
-        
+        f"🪪 <b>نام کاربری:</b> {user_email[chat_id]}\n"
+        f"⌛ <b>تعداد روز:</b> {user_days[chat_id]}\n"
+        f"🔋 <b>سقف ترافیک:</b> {gb} GB\n\n"
+        f"🔗 <b>لینک سابسکریپشن:</b>\n"
+        f"<code>{sub_url}</code>"
+    )
         with open(img_path, 'rb') as photo:
-            bot.send_photo(chat_id, photo, caption=caption_text, parse_mode="MarkdownV2", reply_markup=admins_menu())
+            bot.send_photo(chat_id, photo, caption=caption_text, parse_mode="HTML", reply_markup=admins_menu())
 
         clear_user_data(chat_id)
     else:
@@ -604,16 +604,17 @@ def send_sub_id(message):
 
 
         caption_text = (
-        f"🪪 *نام کاربری:*  {email}\n"
-        f"⌛ *روزهای باقی مانده:*  {remaining_days}\n"
-        f"🔋 *ترافیک مصرف شده:*  {usage_traffic:.2f} GB\n"
-        f"📦 *کل ترافیک:*  {total_traffic:.2f} GB\n\n"
-        f"🔗 *لینک سابسکریپشن:*\n"
-        f"```\n{sub_url}\n```"
-    )
+            f"🪪 <b>نام کاربری:</b> {email}\n"
+            f"⌛ <b>روزهای باقی مانده:</b> {remaining_days}\n"
+            f"🔋 <b>ترافیک مصرف شده:</b> {usage_traffic:.2f} GB\n"
+            f"📦 <b>کل ترافیک:</b> {total_traffic:.2f} GB\n\n"
+            f"🔗 <b>لینک سابسکریپشن:</b>\n"
+            f"<code>{sub_url}</code>"
+        )
 
         with open(img_path, 'rb') as photo:
-            bot.send_photo(chat_id, photo, caption=caption_text, parse_mode="Markdown", reply_markup=admins_menu())
+            bot.send_photo(chat_id, photo, caption=caption_text, parse_mode="HTML", reply_markup=admins_menu())
+
 
 
 # renew user

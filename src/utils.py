@@ -10,3 +10,5 @@ def change_help_message(filename, var_name, new_text):
                 file.write(f'{var_name} = """{new_text}"""\n')
             else:
                 file.write(line)
+
+
