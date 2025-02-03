@@ -1,3 +1,10 @@
+from db.query import *
+from messages import *
+from telebot import TeleBot, types
+from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
+from dotenv import load_dotenv
+from api import *
+from utils import *
 import uuid
 import requests
 import json
@@ -8,13 +15,6 @@ import os
 import time
 import segno
 import random
-from db.query import *
-from messages import *
-from telebot import TeleBot, types
-from telebot.types import InlineKeyboardButton, InlineKeyboardMarkup, ReplyKeyboardMarkup, KeyboardButton
-from dotenv import load_dotenv
-from api import *
-
 load_dotenv()
 
 
@@ -26,7 +26,7 @@ Admin_chat_id = int(os.getenv("ADMIN_CHAT_ID"))
 # main admin menu
 def main_admin_menu ():
     reply_keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False,row_width=2)
-    reply_keyboard.add('👤 ادمین ها', '📘 متن راهنما')
+    reply_keyboard.add('👤 نمایندگان', '📘 متن راهنما')
     return reply_keyboard
 
 
@@ -61,7 +61,7 @@ def message_handler (message):
     button1 = InlineKeyboardButton(text="👤 Login 👤", callback_data="login")
     markup.add(button1)
 
-    if message.text == '👤 ادمین ها':
+    if message.text == '👤 نمایندگان':
         return admins_page(message)
     
     if message.text == '📘 متن راهنما':
@@ -71,7 +71,7 @@ def message_handler (message):
         bot.register_next_step_handler(msg, save_new_help_message)
 
     if message.text == '👤 افزودن کاربر 👤':
-        if not check_if_logged_in(chat_id):
+        if not admins_query.admin_approval(chat_id):
             bot.send_message(chat_id, "❌ شما وارد نشده‌اید. لطفاً وارد شوید.", reply_markup=markup)
             return
         else:
@@ -81,14 +81,14 @@ def message_handler (message):
             bot.register_next_step_handler(message, lambda msg: add_user_step1(msg))
 
     if message.text == '🪪 نمایش کاربران 🪪':
-        if not check_if_logged_in(chat_id):
+        if not admins_query.admin_approval(chat_id):
             bot.send_message(chat_id, "❌ شما وارد نشده‌اید. لطفاً وارد شوید.", reply_markup=markup)
             return
         else:
             send_emails_(chat_id)
 
     if message.text == '⌛ تمدید کاربر ⌛':
-        if not check_if_logged_in(chat_id):
+        if not admins_query.admin_approval(chat_id):
             bot.send_message(chat_id, "❌ شما وارد نشده‌اید. لطفاً وارد شوید.", reply_markup=markup)
             return
         else:
@@ -106,17 +106,17 @@ def message_handler (message):
         msg = bot.send_message(message.chat.id, '⚠️نام کاربر مورد نظر رو جهت حذف کاربر ارسال کنید:', reply_markup=markup)
         bot.register_next_step_handler(msg, delete_user_step1)
 
-    if message.text == '❌ خارج شدن ❌':
-        if check_if_logged_in(chat_id):
-            logout_user(chat_id)
-            bot.send_message(message.chat.id, '❌ شما از پنل مدیریتی خود خارج شدید ، جهت استفاده مجدد لاگین کنید:', reply_markup=markup)
-            logout_user(chat_id)
-            return
-        else:
-            pass
+    # if message.text == '❌ خارج شدن ❌':
+    #     if check_if_logged_in(chat_id):
+    #         logout_user(chat_id)
+    #         bot.send_message(message.chat.id, '❌ شما از پنل مدیریتی خود خارج شدید ، جهت استفاده مجدد لاگین کنید:', reply_markup=markup)
+    #         logout_user(chat_id)
+    #         return
+    #     else:
+    #         pass
         
     if message.text == "💎 مشخصات من 💎":
-        if not check_if_logged_in(chat_id):
+        if not admins_query.admin_approval(chat_id):
             bot.send_message(chat_id, "❌ شما وارد نشده‌اید. لطفاً وارد شوید.", reply_markup=markup)
             return
         else:
@@ -139,15 +139,16 @@ def admins_page(message):
     button4 = InlineKeyboardButton(text= '❌ حذف ادمین ❌', callback_data='del_admin')
     markup.add(button1, button2, button3, button4)
 
-    admins = get_all_admins()
+    admins = admins_query.show_admins()
     if not admins:
         bot.reply_to(message, "❌ هیچ ادمینی ثبت نشده است.", reply_markup=markup)
         return
 
-    response = "🧑🏻‍💻* لیست ادمین‌ها:*\n\n"
+    response = "🧑🏻‍💻* لیست نمایندگان:*\n\n"
     for admin in admins:
         response += (
             f"```\n👤 یوزرنیم: {admin['user_name']}```\n"
+            f"📊 پسورد: {admin['password']}\n"
             f"📊 ترافیک باقی‌مانده: {admin['traffic']} GB\n"
             f"🔢 اینباند درحال استفاده: {admin['inb_id']}\n"
             f"\n"
@@ -237,7 +238,7 @@ def add_admin_step4 (message, user_name, password, trafiic):
     if message.content_type == 'text':
         try:
             inb_id = int(message.text)
-            if add_admin(user_name, password, trafiic, inb_id):
+            if admins_query.add_admin(user_name, password, trafiic, inb_id):
                 bot.send_message(message.chat.id, f'✅ ادمین اضافه شد: \n\n👤username: {user_name} \n\n🔐password: {password} \n\n🔋total trafiic: {trafiic}', reply_markup=main_admin_menu())
             else:
                 bot.send_message(message.chat.id, 'admin already exists.')
@@ -258,7 +259,7 @@ def add_traffic_step2(message, user_name):
     if message.content_type == 'text':
         try:
             traffic = int(message.text)
-            if add_traffic_for_admin(user_name, traffic):
+            if admins_query.add_traffic(user_name, traffic):
                 bot.send_message(message.chat.id, '✅ ترافیک با موفقیت اضافه شد')
             else:
                 bot.send_message(message.chat.id, '❌ کاربری با این نام پیدا نشد ')
@@ -281,7 +282,7 @@ def edit_inb_step2(message, user_name):
         try:
             new_inb = int(message.text)
             bot.send_message(message.chat.id, '✅ اینباد ادمین موردنظر تغییر یافت')
-            change_inb_id(user_name, new_inb)
+            admins_query.change_inb(user_name, new_inb)
 
         except ValueError:
             bot.send_message(message.chat.id, "Please enter a valid numeric ID.")
@@ -292,7 +293,7 @@ def Del_admin(message):
     if message.content_type == 'text': 
         try:
             user_name = message.text
-            delete_admin(user_name)
+            admins_query.delete_admin(user_name)
             bot.send_message(message.chat.id, f"*✅ ادمین با یوزرنیم: {user_name}، حذف شد *",parse_mode='markdown', reply_markup=main_admin_menu())
         except Exception as e:
             bot.send_message(message.chat.id, f"An error occurred: {e}")
@@ -313,7 +314,7 @@ def login_step2(message, user_name):
         try:
             password = message.text
             chat_id = message.chat.id
-            if login_user(user_name, password, chat_id) and save_admin_login(chat_id, user_name):
+            if admins_query.add_chat_id(user_name, password, chat_id):
                 bot.send_message(message.chat.id, '👑 خوش آمدید! وارد سیستم شدید.')
                 bot.send_message(message.chat.id, f'*{START_FOR_ADMINS}*',parse_mode='markdown', reply_markup=admins_menu())
             else:
@@ -321,9 +322,7 @@ def login_step2(message, user_name):
         except ValueError:
             bot.send_message(message.chat.id, "Please enter a valid world.")
 
-#check logged
-def check_if_logged_in(chat_id):
-    return chat_id in logged_in_users
+
 
 
 
@@ -374,8 +373,8 @@ def add_user_step3(message):
                 bot.send_message(chat_id, "❌ لطفاً مقدار ترافیک معتبر و مثبت وارد کنید.")
                 bot.register_next_step_handler(message, add_user_step3)
                 return
-
-            admin_traffic = get_admin_traffic(chat_id)
+            get_admin_traffic = admins_query.admin_data(chat_id)
+            admin_traffic = get_admin_traffic['traffic']
 
             if admin_traffic is None:
                 bot.send_message(chat_id, "❌ مشکلی در اطلاعات شما وجود دارد.")
@@ -391,7 +390,7 @@ def add_user_step3(message):
 
                 bot.send_message(chat_id, warning_text, parse_mode="Markdown")
                 
-            if update_admin_traffic(chat_id, -gb):
+            if admins_query.reduce_traffic(chat_id, -gb):
                 user_gb[chat_id] = gb
                 add_user_f(chat_id)
             else:
@@ -437,7 +436,8 @@ def add_user_f(chat_id):
     "reset": ""
     }]}
 
-    inb_id = get_inb_id(chat_id)
+    get_admin_inb_id = admins_query.admin_data(chat_id)
+    inb_id = get_admin_inb_id['inb_id']
     proces = {
         "id": inb_id,
         "settings": json.dumps(settings)
@@ -473,7 +473,8 @@ def clear_user_data(chat_id):
 
 #get info 
 def get_admin_info(chat_id):
-    admin_traffic = get_admin_traffic(chat_id)
+    get_admin_traffic = admins_query.admin_data(chat_id)
+    admin_traffic = get_admin_traffic['traffic']
     if admin_traffic is None:
         bot.send_message(chat_id, "❌ مشکلی در دریافت اطلاعات شما وجود دارد.")
         return
@@ -494,7 +495,8 @@ def cancel_button():
 
 
 def send_emails_(chat_id):
-    inb_id = get_inb_id(chat_id)
+    get_admin_inb_id = admins_query.admin_data(chat_id)
+    inb_id = get_admin_inb_id['inb_id']
     url = f"https://{panel}/panel/api/inbounds/get/{inb_id}"
 
     get = s.get(url=url, headers=headers)
@@ -641,7 +643,8 @@ def renew_user_step1(message):
             return
 
         gb = obj.get('total', 0) / (1024 ** 3)
-        admin_traffic = get_admin_traffic(chat_id)
+        get_admin_traffic = admins_query.admin_data(chat_id)
+        admin_traffic = get_admin_traffic['traffic']
 
         if gb > admin_traffic:
             bot.send_message(chat_id, f"❌ ترافیک کافی برای ایجاد کاربر ندارید. (ترافیک شما: {admin_traffic} GB)", reply_markup=admins_menu())
@@ -653,8 +656,9 @@ def renew_user_step1(message):
                 "❗ لطفاً بررسی کنید."
             bot.send_message(chat_id, warning_text, parse_mode="Markdown")
                 
-        if update_admin_traffic(chat_id, -gb):
-            inb_id = get_inb_id(chat_id)
+        if admins_query.reduce_traffic(chat_id, -gb):
+            get_admin_inb_id = admins_query.admin_data(chat_id)
+            inb_id = get_admin_inb_id['inb_id']
             url = f"https://{panel}/panel/api/inbounds/{inb_id}/resetClientTraffic/{email}"
             response = s.post(url=url, headers=headers)
 
@@ -683,7 +687,8 @@ def renew_user_step2(message, email):
     get = s.get(url=url, headers=headers)
 
     if get.status_code == 200:
-        inb_id = get_inb_id(chat_id)
+        get_admin_inb_id = admins_query.admin_data(chat_id)
+        inb_id = get_admin_inb_id['inb_id']
         url = f"https://{panel}/panel/api/inbounds/get/{inb_id}"
         response = s.get(url=url, headers=headers)
 
@@ -733,8 +738,8 @@ def renew_user_step2(message, email):
 
 # get users uuid and...
 def get_users_info_by_email(email, chat_id):
-        inb_id = get_inb_id(chat_id)
-
+        get_admin_inb_id = admins_query.admin_data(chat_id)
+        inb_id = get_admin_inb_id['inb_id']
         url = f"https://{panel}/panel/api/inbounds/get/{inb_id}"
         response = s.get(url=url, headers=headers)
 
@@ -782,7 +787,8 @@ def delete_user_step2(call, email):
     message_id = call.message.message_id
 
     user_id = get_users_info_by_email(email, chat_id)
-    inb_id = get_inb_id(chat_id)
+    get_admin_inb_id = admins_query.admin_data(chat_id)
+    inb_id = get_admin_inb_id['inb_id']
     url = f"https://{panel}/panel/api/inbounds/{inb_id}/delClient/{user_id}"
 
     response = s.post(url=url, headers=headers)

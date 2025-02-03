@@ -3,14 +3,14 @@ STRART_FOR_MAIN_ADMIN ="""درود 🙌🏻
 به داشبورد مدیریت وال بات خوش آمدید.
 
 💻 devlop by: @primez_dev
-🐋 wall bot (v 2.3.1)"""
+🐋 wall bot (v 2.3.2)"""
 
 START_FOR_ADMINS ="""درود 🙌🏻
 
 به پنل مدیریت کاربران ویتوری وال بات خوش آمدید.
 
 
-🐋 wall bot (v 2.3.1)"""
+🐋 wall bot (v 2.3.2)"""
 
 
 ADD_ADMIN_1 ="""1⃣ مرحله اول
