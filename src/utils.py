@@ -1,7 +1,7 @@
 
 # Change help message
 def change_help_message(new_text):
-    file_path = "src/messages.py"
+    file_path = "src/messages/messages.py"
 
     with open(file_path, "r", encoding="utf-8") as file:
         lines = file.readlines()
