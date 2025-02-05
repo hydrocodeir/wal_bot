@@ -124,7 +124,7 @@ remove_wal_bot() {
 while true; do
     clear
     echo -e "${CYAN}========================================${NC}"
-    echo -e "${CYAN}           Wal Bot Installer            ${NC}"
+    echo -e "${CYAN}      Wal Bot Installer  |  @primez_dev ${NC}"
     echo -e "${CYAN}========================================${NC}"
     echo -e "${GREEN} 1.   Install Wal Bot${NC}"
     echo -e "${YELLOW} 2.   Update Wal Bot${NC}"
@@ -132,7 +132,6 @@ while true; do
     echo -e "${CYAN} 4.   Exit${NC}"
     echo -e "${CYAN}========================================${NC}"
     read -rp "👉 Choose an option: " OPTION
-
     case $OPTION in
         1) install_wal_bot ;;
         2) update_wal_bot ;;
