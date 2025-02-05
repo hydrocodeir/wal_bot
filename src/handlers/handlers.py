@@ -657,7 +657,8 @@ def delete_user_step2(call, email):
 def save_new_help_message(message):
     if message.text == '❌ بازگشت ❌':
         return bot.send_message(message.chat.id, "✅ عملیات ویرایش راهنما لغو شد.", reply_markup= main_admin_menu())
-    
+
+
     new_text = message.text.strip()
     if change_help_message(new_text):
         bot.send_message(message.chat.id, '✅متن راهنما با موفقیت تغییر یافت.', reply_markup= main_admin_menu())
