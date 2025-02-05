@@ -43,15 +43,15 @@ install_wal_bot() {
     cd "$REPO_DIR" || { echo -e "${RED}Failed to enter the repository directory.${NC}"; exit 1; }
 
     # Step 4: Prompt for configuration values
-    ENV_FILE="src/.env"
+    ENV_FILE="src/db/.env"
     echo -e "${GREEN}Configuring your wal_bot...${NC}"
 
     read -rp "$(echo -e "${CYAN}Enter your Telegram Admin Chat ID: ${NC}")" ADMIN_CHAT_ID
     read -rp "$(echo -e "${CYAN}Enter your Telegram Bot Token: ${NC}")" BOT_TOKEN
-    read -rp "$(echo -e "${CYAN}Enter your Panel Address example, panel.example.com:port/fLqjAG: ${NC}")" PANEL_ADDRESS
+    read -rp "$(echo -e "${CYAN}Enter your Panel Address example, panel.example.com:port/path: ${NC}")" PANEL_ADDRESS
     read -rp "$(echo -e "${CYAN}Enter your Subscription Address example, panel.example.com:port/sub: ${NC}")" SUB_ADDRESS
-    read -rp "$(echo -e "${CYAN}Enter your Panel Username: ${NC}")" PANEL_USER
-    read -rp "$(echo -e "${CYAN}Enter your Panel Password: ${NC}")" PANEL_PASS
+    read -rp "$(echo -e "${CYAN}Enter your 3x-ui Panel Username: ${NC}")" PANEL_USER
+    read -rp "$(echo -e "${CYAN}Enter your 3x-ui Panel Password: ${NC}")" PANEL_PASS
 
     cat <<EOF > "$ENV_FILE"
 ADMIN_CHAT_ID=${ADMIN_CHAT_ID}
@@ -61,12 +61,6 @@ SUB_ADDRESS=${SUB_ADDRESS}
 PANEL_USER=${PANEL_USER}
 PANEL_PASS=${PANEL_PASS}
 EOF
-
-
-
-
-
-
 
     echo -e "${GREEN}Configuration saved successfully to ${ENV_FILE}!${NC}"
 
@@ -101,7 +95,6 @@ EOF"
     echo -e "${GREEN}Your wal_bot is now running and configured to start on boot!${NC}"
 }
 
-
 # Function: Update wal_bot
 update_wal_bot() {
     echo -e "${GREEN}Updating wal_bot...${NC}"
@@ -129,19 +122,24 @@ remove_wal_bot() {
 
 # Main menu
 while true; do
-    echo -e "\n${CYAN}====> Wal Bot <====${NC}"
-    echo -e "${CYAN}==== @primez_dev ====${NC}\n"
-    echo -e "${GREEN}1. Install wal bot${NC}"
-    echo -e "${YELLOW}2. Update wal bot${NC}"
-    echo -e "${RED}3. Remove wal bot${NC}"
-    echo -e "${CYAN}4. Exit${NC}"
-    read -rp "Choose an option: " OPTION
+    clear
+    echo -e "${CYAN}========================================${NC}"
+    echo -e "${CYAN}           Wal Bot Installer            ${NC}"
+    echo -e "${CYAN}========================================${NC}"
+    echo -e "${GREEN} 1.   Install Wal Bot${NC}"
+    echo -e "${YELLOW} 2.   Update Wal Bot${NC}"
+    echo -e "${RED} 3.   Remove Wal Bot${NC}"
+    echo -e "${CYAN} 4.   Exit${NC}"
+    echo -e "${CYAN}========================================${NC}"
+    read -rp "👉 Choose an option: " OPTION
 
     case $OPTION in
         1) install_wal_bot ;;
         2) update_wal_bot ;;
         3) remove_wal_bot ;;
-        4) echo -e "${CYAN}Exiting...${NC}"; exit 0 ;;
+        4) echo -e "${CYAN}Goodbye!  ${NC}"; exit 0 ;;
         *) echo -e "${RED}Invalid option. Please try again.${NC}" ;;
     esac
+    sleep 2
+
 done

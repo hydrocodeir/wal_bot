@@ -95,14 +95,14 @@ class AdminsQuery:
         
     def admin_data(self, chat_id):
         try:
-            get = session.query(admins).filter(admins.chat_id == chat_id).first()
-            if not get:
+            admin = session.query(admins).filter(admins.chat_id == chat_id).first()
+            if not admin:
                 return False
             data = {
-                "user_name": get.user_name,
-                "traffic": get.traffic,
-                "inb_id": get.inb_id
-                }
+                "user_name": admin.user_name,
+                "traffic": admin.traffic,
+                "inb_id": admin.inb_id
+            }
             return data
         except:
             return False
@@ -144,14 +144,7 @@ admins_query = AdminsQuery()
 # admins_query.show_admins()
 # admins_query.add_chat_id('ali', 'ali', 121111111)
 # admins_query.remove_chat_id(121111111)
-# get = admins_query.admin_data(121111111)
-# if get:
-#     print(get['traffic'])
-# else:
-#     print("No data found or an error occurred.")
-# get_admin_traffic = admins_query.admin_data(121111111)
-# admin_traffic = get_admin_traffic['traffic']
-# print(admin_traffic)
+# admins_query.admin_data(121111111)
 # if admins_query.admin_approval(121111111):
 #     print(1)
 # else: print(2)
