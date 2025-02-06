@@ -51,6 +51,9 @@ bash <(curl -Ls https://raw.githubusercontent.com/primeZdev/wal_bot/main/install
 
 
 ## ⭐ حمایت از پروژه
-> **فراموش نکنید که با دادن استار (⭐) از این پروژه حمایت کنید!**  
+> **فراموش نکنید که با دادن استار (⭐) از این پروژه حمایت کنید!**  <br>
+
+
+> **TRON network (TRC20): TBmQbMVGLer2DkX4RUmuunAYR73nzAtjYL**
 
 [![Stargazers over time](https://starchart.cc/primeZdev/wal_bot.svg?variant=adaptive)](https://starchart.cc/primeZdev/wal_bot)
