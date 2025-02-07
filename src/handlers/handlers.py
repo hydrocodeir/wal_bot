@@ -409,7 +409,7 @@ def add_user_step3(message):
                 return
             
             if gb > admin_traffic:
-                bot.send_message(chat_id, f"❌ ترافیک کافی برای ایجاد کاربر ندارید. (ترافیک شما: {admin_traffic} GB)")
+                bot.send_message(chat_id, f"❌ ترافیک کافی برای ایجاد کاربر ندارید. (ترافیک شما: {admin_traffic} GB)", reply_markup=admins_menu())
                 return
             if admin_traffic < 100:
                 warning_text = "⚠️ *هشدار مهم*\n\n" \
