@@ -21,3 +21,27 @@ def change_help_message(new_text):
     
     except Exception as e:
         return False
+
+
+# change card numb
+def change_card_id(new_card):
+    file_path = "src/messages/messages.py"
+
+    with open(file_path, "r", encoding="utf-8") as file:
+        lines = file.readlines()
+
+    found = False 
+
+    try:
+        with open(file_path, "w", encoding="utf-8") as file:
+            for line in lines:
+                if line.startswith("CARD_NUMBER"):
+                    file.write(f'CARD_NUMBER = """{new_card}"""\n')
+                    found = True
+                else:
+                    file.write(line)
+
+        return found
+    
+    except Exception as e:
+        return False

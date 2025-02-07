@@ -1,7 +1,8 @@
-from keyboards.keyboards import main_admin_menu, admins_menu, admins_controll
-from db.query import admins_query
+from keyboards.keyboards import main_admin_menu, admins_menu, admins_controll, plans_controll, payment_methods
+from pay.card_method import receive_photo_step
+from db.query import admins_query, price_query
 from config import bot, Admin_chat_id
-from utils import change_help_message
+from utils import change_help_message, change_card_id
 import uuid
 import requests
 import datetime
@@ -45,9 +46,38 @@ def admins_page(message):
                 f"🔢 اینباند درحال استفاده: {admin['inb_id']}\n"
                 f"\n"
             )
-
-
         bot.reply_to(message, response, parse_mode='markdown', reply_markup=admins_controll())
+# plans page
+def plans_page(message):
+    plans = price_query.show_plans()
+    if not plans:
+        bot.reply_to(message, '❌هیچ پلنی ساخته نشده است', reply_markup=plans_controll())
+        return
+    else:
+        response = "📋* لیست پلن های نمایندگی:*\n\n"
+        for plan in plans:
+            response += (
+                f"```\n🔢 ایدی پلن: {plan['id']}```\n"
+                f"📊 ترافیک: {plan['traffic']} GB\n"
+                f"💵 قیمت : {plan['price']} T\n"
+                f"\n"
+            )
+        bot.reply_to(message, response, parse_mode='markdown', reply_markup=plans_controll())
+
+def show_plans_with_button(message):
+    plans = price_query.show_plans()
+    if not plans:
+        bot.send_message(message, "❌هیچ پلنی موجود نیست.")
+        return
+    else:
+        response = "📋* لیست پلن ها:*\n\n(قیمت ها به تومان هست!)"
+        markup = InlineKeyboardMarkup(row_width=1)
+        
+        for plan in plans:
+            button_text = f"ترافیک: {plan['traffic']} GB - قیمت: {plan['price']} T"
+            button = InlineKeyboardButton(text=button_text, callback_data=f"select_plan_{plan['id']}")
+            markup.add(button)
+        bot.send_message(message, response, reply_markup=markup, parse_mode='Markdown')
 
 
 
@@ -60,34 +90,152 @@ def callback_handler (call):
         bot.edit_message_text(text=ADD_ADMIN_1, chat_id=chat_id, message_id=message_id)
         bot.register_next_step_handler(call.message, add_admin_step1)
 
-    if call.data == 'change_inb':
+    elif call.data == 'change_inb':
         bot.edit_message_text(text=CHANGE_INB_ID, chat_id=chat_id, message_id=message_id)
         bot.register_next_step_handler(call.message, edit_inb_step1)
 
-    if call.data == 'add_traffic':
+    elif call.data == 'add_traffic':
         bot.edit_message_text(text='یوزرنیم ادمین مورد نظر رو جهت افزایش ترافیک وارد کنید:', chat_id=chat_id, message_id=message_id)
         bot.register_next_step_handler(call.message, add_traffic_step1)
 
-    if call.data == 'delete_admin':
+    elif call.data == 'delete_admin':
         bot.edit_message_text(text='یوزر نیم ادمین مورد نظر رو جهت حذف کردن واردکنید:', chat_id=chat_id, message_id=message_id)
         bot.register_next_step_handler(call.message, delete_admin)
 
-    if call.data == "login":
+    elif call.data == 'add_a_plan':
+        markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        markup.add(KeyboardButton('❌ بازگشت ❌'))
+        bot.delete_message(chat_id=chat_id, message_id=message_id)
+        bot.send_message(chat_id=chat_id, text=ADD_PLAN1, reply_markup=markup)
+        bot.register_next_step_handler(call.message, add_plan_step1)
+
+    elif call.data == 'change_plan':
+        markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        markup.add(KeyboardButton('❌ بازگشت ❌'))
+        bot.delete_message(chat_id=chat_id, message_id=message_id)
+        bot.send_message(chat_id=chat_id, text=CHANGE_PLAN1, reply_markup=markup)
+        bot.register_next_step_handler(call.message, change_plan_step1)
+
+    elif call.data == 'delete_plan':
+        markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        markup.add(KeyboardButton('❌ بازگشت ❌'))
+        bot.delete_message(chat_id=chat_id, message_id=message_id)
+        bot.send_message(chat_id=chat_id, text=DELETE_PLAN, reply_markup=markup)
+        bot.register_next_step_handler(call.message, delete_plan)
+
+    elif call.data == 'set_card':
+        markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+        markup.add(KeyboardButton('❌ بازگشت ❌'))
+        msg = bot.send_message(chat_id, f'*💳 شماره حساب فعلی:\n{CARD_NUMBER}*\n\n ♻️لطفا شماره حساب جدید خود را وارد کنید:',parse_mode='markdown', reply_markup=markup)
+        bot.register_next_step_handler(msg, save_new_card_id)
+
+
+
+    elif call.data == "login":
         bot.edit_message_text(text='لطفا یوزرنیم خود را وارد کنید:',chat_id=chat_id, message_id=message_id)
         bot.register_next_step_handler(call.message, login_step1)
 
-    if call.data.startswith("del_"):
+    elif call.data.startswith("del_"):
         email = call.data.split("_")[1]
         bot.delete_message(call.message.chat.id, call.message.message_id)
         delete_user_step2(call, email)
 
-    if call.data == 'cancel':
+    elif call.data.startswith("select_plan_"):
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+        id = call.data.split("_")[2]
+        bot.send_message(chat_id=chat_id, text='🔗روش پرداخت خود را انتخاب کنید', reply_markup=payment_methods())
+        data[chat_id] = id
+
+    elif call.data == 'card_payment':
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+        id = data.get(chat_id, "نامشخص")
+        bot.send_message(chat_id=chat_id, text=f'*{SEND_DIPOSIT_PHOTO}\n💳 شماره کارت:*\n```{CARD_NUMBER}```', parse_mode='markdown')
+
+        bot.register_next_step_handler(call.message, receive_photo_step, id, chat_id)
+        
+
+
+    elif call.data == 'cancel':
         try:
             bot.delete_message(chat_id, message_id)
         except:
             pass
 
         bot.send_message(chat_id, text="✅ عملیات لغو شد!", reply_markup=admins_menu())
+
+# add plan
+def add_plan_step1(message):
+    if message.text == '❌ بازگشت ❌':
+        return bot.send_message(message.chat.id, "✅ عملیات ویرایش راهنما لغو شد.", reply_markup=main_admin_menu())
+    try:
+        traffic = message.text
+        bot.send_message(message.chat.id, ADD_PLAN2)
+        bot.register_next_step_handler(message, lambda msg: add_plan_step2(msg, traffic))
+    except ValueError:
+        bot.send_message(message.chat.id, '❌ Please send a valid world.')
+
+def add_plan_step2(message, traffic):
+    if message.text == '❌ بازگشت ❌':
+        return bot.send_message(message.chat.id, "✅ عملیات ویرایش راهنما لغو شد.", reply_markup=main_admin_menu())
+    try:
+        price = message.text
+        added_plan = price_query.add_plan(traffic, price)
+        if added_plan:
+            bot.send_message(message.chat.id, '✅پلن شما با موفقیت ساخته شد', reply_markup=main_admin_menu())
+    except ValueError:
+        bot.send_message(message.chat.id, '❌ Please send a valid world.')
+
+# change plan
+def change_plan_step1(message):
+    if message.text == '❌ بازگشت ❌':
+        return bot.send_message(message.chat.id, "✅ عملیات ویرایش راهنما لغو شد.", reply_markup=main_admin_menu())
+    try:
+        id = message.text
+        bot.send_message(message.chat.id, CHANGE_PLAN2)
+        bot.register_next_step_handler(message, lambda msg: change_plan_step2(msg, id))    
+    except ValueError:
+        bot.send_message(message.chat.id, '❌ Please send a valid world.')
+
+def change_plan_step2(message, id):
+    if message.text == '❌ بازگشت ❌':
+        return bot.send_message(message.chat.id, "✅ عملیات ویرایش راهنما لغو شد.", reply_markup=main_admin_menu())
+    try:
+        traffic = message.text
+        bot.send_message(message.chat.id, CHANGE_PLAN3)
+        bot.register_next_step_handler(message, lambda msg: change_plan_step3(msg, id, traffic))    
+    except ValueError:
+        bot.send_message(message.chat.id, '❌ Please send a valid world.')
+
+def change_plan_step3(message, id, traffic):
+    if message.text == '❌ بازگشت ❌':
+        return bot.send_message(message.chat.id, "✅ عملیات ویرایش راهنما لغو شد.", reply_markup=main_admin_menu())
+    try:
+        price = message.text
+        if price_query.edite_plan(id, traffic, price):
+            bot.send_message(message.chat.id, '✅تغییرات با موفقیت اعمال شد', reply_markup=main_admin_menu())
+        else:
+            bot.send_message(message.chat.id, '❌ مقادریر واردشده صحیح نیستن\n(از صحت ایدی پلن اطمینان حاصل کنید!!)', reply_markup=main_admin_menu())
+    except ValueError:
+        bot.send_message(message.chat.id, '❌ Please send a valid world.')
+
+# delete plan
+def delete_plan(message):
+    if message.text == '❌ بازگشت ❌':
+        return bot.send_message(message.chat.id, "✅ عملیات  لغو شد.", reply_markup=main_admin_menu())
+    try:
+        id = message.text
+        if price_query.delete_plan(id):
+            bot.send_message(message.chat.id, '✅پلن مورد نظر حذف شد', reply_markup=main_admin_menu())
+        else:
+            msg = bot.send_message(message.chat.id, '❌ لطفا یک عدد درست ارسال کنید.')
+            bot.register_next_step_handler(msg, delete_plan)
+
+    except ValueError:
+        bot.send_message(message.chat.id, '❌ Please send a valid world.')
+
+
+
+
 
 
 
@@ -324,18 +472,23 @@ def clear_user_data(chat_id):
 
 #get info 
 def get_admin_info(chat_id):
-    get_admin_traffic = admins_query.admin_data(chat_id)
-    admin_traffic = get_admin_traffic['traffic']
+    admin_data = admins_query.admin_data(chat_id)
+    admin_traffic = admin_data['traffic']
+    username = admin_data['user_name']
+    password = admin_data['password']
     if admin_traffic is None:
         bot.send_message(chat_id, "❌ مشکلی در دریافت اطلاعات شما وجود دارد.")
         return
-
-    bot.send_message(
-        chat_id,
-        f"👤 مشخصات شما:\n🔋 ترافیک باقی‌مانده: {admin_traffic} GB",
-        reply_markup=admins_menu()
-    )
-    
+    else:
+        caption = (
+            f"🔗* مشخصات شما:*\n\n"
+            f"👤* یوزرنیم:*  {username}\n"
+            f"🔐* پسورد:*  {password}\n"
+            f"🔋* ترافیک باقی مانده:*  {admin_traffic} GB\n\n"
+        )
+        bot.send_message(
+            chat_id, caption, parse_mode='markdown', reply_markup=admins_menu())
+        
 # show clients
 email_data={}
 def cancel_button():
@@ -650,18 +803,28 @@ def delete_user_step2(call, email):
             )
 
 
-
-
-
 # save new help message
 def save_new_help_message(message):
     if message.text == '❌ بازگشت ❌':
-        return bot.send_message(message.chat.id, "✅ عملیات ویرایش راهنما لغو شد.", reply_markup= main_admin_menu())
+        return bot.send_message(message.chat.id, "✅ عملیات ویرایش راهنما لغو شد.", reply_markup=main_admin_menu())
 
 
     new_text = message.text.strip()
     if change_help_message(new_text):
-        bot.send_message(message.chat.id, '✅متن راهنما با موفقیت تغییر یافت.', reply_markup= main_admin_menu())
+        bot.send_message(message.chat.id, '✅متن راهنما با موفقیت تغییر یافت.', reply_markup=main_admin_menu())
         os.system("systemctl restart wal_bot.service")
     else:
-        bot.send_message(message.chat.id, 'خطا هنگام نوشتن در فایل', reply_markup= main_admin_menu())
+        bot.send_message(message.chat.id, 'خطا هنگام نوشتن در فایل', reply_markup=main_admin_menu())
+
+# save new card numb
+def save_new_card_id(message):
+    if message.text == '❌ بازگشت ❌':
+        return bot.send_message(message.chat.id, "✅ عملیات ویرایش راهنما لغو شد.", reply_markup=main_admin_menu())
+
+
+    new_card = message.text.strip()
+    if change_card_id(new_card):
+        bot.send_message(message.chat.id, '✅شماره حساب با موفقیت تغییر یافت', reply_markup=main_admin_menu())
+        os.system("systemctl restart wal_bot.service")
+    else:
+        bot.send_message(message.chat.id, 'خطا هنگام نوشتن در فایل', reply_markup=main_admin_menu())

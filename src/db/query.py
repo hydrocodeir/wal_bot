@@ -16,7 +16,86 @@ class admins(base):
     traffic = Column('traffic', Integer)
     inb_id = Column('inb_id', Integer)
 
+class priceing(base):
+    __tablename__ = 'priceing'
+
+    id = Column('id', Integer, primary_key=True, autoincrement=True)
+    traffic = Column('traffic', Integer)
+    price = Column('price', Integer)
+
 base.metadata.create_all(engine)
+
+
+# pricing query
+class PriceQuery:
+    def add_plan(self, traffic, price):
+        try:
+            new_plan = priceing(
+                traffic=traffic,
+                price=price
+            )
+            session.add(new_plan)
+            session.commit()
+            return True
+        except:
+            return False
+    
+    def delete_plan(self, id):
+        try:
+            delete = session.query(priceing).filter(priceing.id==id).first()
+            session.delete(delete)
+            session.commit()
+            self.reorder_ids()
+            return True
+        except:
+            return False
+        
+    def edite_plan(self, id, traffic, price):
+        try:
+            update = session.query(priceing).filter(priceing.id==id).update({'traffic':traffic, 'price':price})
+            session.commit()
+            if update:
+                return True
+            else:
+                return False
+        except:
+            return False
+    
+    def reorder_ids(self):
+        try:
+            plans = session.query(priceing).order_by(priceing.id).all()
+            for index, plan in enumerate(plans, start=1):
+                plan.id = index
+            session.commit()
+            return True
+        except:
+            return False
+        
+    def show_plans(self):
+        try:
+            plans = session.query(priceing).all()
+            pricing_list = [
+                {"id": price.id, "traffic": price.traffic,"price":price.price}
+                for price in plans
+            ]
+            return pricing_list
+        except:
+            False
+        
+    def get_plan(self,id):
+        try:
+            plan = session.query(priceing).filter(priceing.id==id).first()
+            if not plan:
+                return False
+            data = {
+                "traffic": plan.traffic,
+                "price": plan.price,
+            }
+            return data
+        except:
+            return False
+price_query = PriceQuery()
+
 
 # admins query
 class AdminsQuery:
@@ -100,6 +179,7 @@ class AdminsQuery:
                 return False
             data = {
                 "user_name": admin.user_name,
+                "password": admin.password,
                 "traffic": admin.traffic,
                 "inb_id": admin.inb_id
             }
@@ -137,14 +217,4 @@ class AdminsQuery:
             return False
 
 admins_query = AdminsQuery()
-# admins_query.add_admin('ali', 'ali', 1000, 8)
-# admins_query.change_inb('ali', 2)
-# admins_query.add_traffic('ali', 500).
-# admins_query.delete_admin('mmd')
-# admins_query.show_admins()
-# admins_query.add_chat_id('ali', 'ali', 121111111)
-# admins_query.remove_chat_id(121111111)
-# admins_query.admin_data(121111111)
-# if admins_query.admin_approval(121111111):
-#     print(1)
-# else: print(2)
+

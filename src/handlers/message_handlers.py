@@ -1,4 +1,4 @@
-from handlers.handlers import admins_page, save_new_help_message, add_user_step1, send_emails_, renew_user_step1, admins_menu, delete_user_step1, get_admin_info
+from handlers.handlers import admins_page, plans_page,show_plans_with_button, save_new_help_message, add_user_step1, send_emails_, renew_user_step1, admins_menu, delete_user_step1, get_admin_info
 from db.query import admins_query
 from messages.messages import *
 from config import bot
@@ -18,6 +18,9 @@ def message_handler (message):
 
     if message.text == '👤 نمایندگان':
         return admins_page(message)
+    
+    if message.text == '⚙️ پلن ها':
+        return plans_page(message)
     
     if message.text == '📘 متن راهنما':
         markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
@@ -56,10 +59,21 @@ def message_handler (message):
         bot.reply_to(message, f'*{HELP_MESSAGE}*',parse_mode='markdown', reply_markup=admins_menu())
 
     if message.text == '🗑️ حذف کاربر 🗑️':
-        markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-        markup.add(KeyboardButton('❌ بازگشت ❌'))
-        msg = bot.send_message(chat_id, '⚠️نام کاربر مورد نظر رو جهت حذف کاربر ارسال کنید:', reply_markup=markup)
-        bot.register_next_step_handler(msg, delete_user_step1)
+        if not admins_query.admin_approval(chat_id):
+            bot.send_message(chat_id, "❌ شما وارد نشده‌اید. لطفاً وارد شوید.", reply_markup=markup)
+            return
+        else:
+            markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+            markup.add(KeyboardButton('❌ بازگشت ❌'))
+            msg = bot.send_message(chat_id, '⚠️نام کاربر مورد نظر رو جهت حذف کاربر ارسال کنید:', reply_markup=markup)
+            bot.register_next_step_handler(msg, delete_user_step1)
+
+    if message.text == '💵 خرید ترافیک 💵':
+        if not admins_query.admin_approval(chat_id):
+            bot.send_message(chat_id, "❌ شما وارد نشده‌اید. لطفاً وارد شوید.", reply_markup=markup)
+            return
+        else:
+            show_plans_with_button(chat_id)
 
     if message.text == '❌ خارج شدن ❌':
         if admins_query.remove_chat_id(chat_id):
