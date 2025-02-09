@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   walbot:
     image: primezdev/wal_bot:latest
@@ -5,4 +7,4 @@ services:
     env_file:
       - .env
     volumes:
-      - ./data/wal.db:/app/src/db
+      - ./data/db:/app/src/db
