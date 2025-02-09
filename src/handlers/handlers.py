@@ -815,7 +815,7 @@ def save_new_help_message(message):
     new_text = message.text.strip()
     if change_help_message(new_text):
         bot.send_message(message.chat.id, '✅متن راهنما با موفقیت تغییر یافت.', reply_markup=main_admin_menu())
-        os.system("systemctl restart wal_bot.service")
+        os.system("docker-compose restart")
     else:
         bot.send_message(message.chat.id, 'خطا هنگام نوشتن در فایل', reply_markup=main_admin_menu())
 
@@ -828,6 +828,6 @@ def save_new_card_id(message):
     new_card = message.text.strip()
     if change_card_id(new_card):
         bot.send_message(message.chat.id, '✅شماره حساب با موفقیت تغییر یافت', reply_markup=main_admin_menu())
-        os.system("systemctl restart wal_bot.service")
+        os.system("docker-compose restart")
     else:
         bot.send_message(message.chat.id, 'خطا هنگام نوشتن در فایل', reply_markup=main_admin_menu())
