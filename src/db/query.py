@@ -23,8 +23,6 @@ class priceing(base):
     traffic = Column('traffic', Integer)
     price = Column('price', Integer)
 
-base.metadata.create_all(engine)
-
 
 # pricing query
 class PriceQuery:
