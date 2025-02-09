@@ -25,8 +25,8 @@ def receive_photo_step(message, id, chat_id):
         )
         bot.send_message(chat_id, WAITING_FOR_APPROVAL, reply_markup=admins_menu())
         markup = InlineKeyboardMarkup(row_width=2)
-        button1 = InlineKeyboardButton(text='✅تایید', callback_data=f'approv_pay_{chat_id}')
-        button2 = InlineKeyboardButton(text='❌رد کردن', callback_data=f'reject_pay_{chat_id}')
+        button1 = InlineKeyboardButton(text='✅ تایید خرید', callback_data=f'approv_pay_{chat_id}')
+        button2 = InlineKeyboardButton(text='❌ رد خرید', callback_data=f'reject_pay_{chat_id}')
         markup.add(button1,button2)
         bot.send_photo(Admin_chat_id, file_id, caption=caption, parse_mode='markdown', reply_markup=markup)
 

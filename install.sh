@@ -112,7 +112,7 @@ update_wal_bot() {
 
 # Function: Remove wal_bot
 remove_wal_bot() {
-    echo -e "${RED}Removing wal_bot...${NC}"
+    echo -e "${RED}Removing wal bot...${NC}"
     sudo systemctl stop wal_bot.service
     sudo systemctl disable wal_bot.service
     sudo rm -rf wal_bot /etc/systemd/system/wal_bot.service

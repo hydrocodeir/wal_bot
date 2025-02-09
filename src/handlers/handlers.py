@@ -315,9 +315,10 @@ def edit_inb_step2(message, user_name):
     if message.content_type == 'text':
         try:
             new_inb = int(message.text)
-            admins_query.change_inb(user_name, new_inb)
-            bot.send_message(message.chat.id, '✅ اینباد ادمین موردنظر تغییر یافت')
-
+            if admins_query.change_inb(user_name, new_inb):
+                bot.send_message(message.chat.id, '✅ اینباد ادمین موردنظر تغییر یافت')
+            else:
+                bot.send_message(message.chat.id, '❌ کاربری با این نام پیدا نشد ')
         except ValueError:
             bot.send_message(message.chat.id, "Please enter a valid numeric ID.")
 
@@ -327,8 +328,10 @@ def delete_admin(message):
     if message.content_type == 'text': 
         try:
             user_name = message.text
-            admins_query.delete_admin(user_name)
-            bot.send_message(message.chat.id, f"*✅ ادمین با یوزرنیم: {user_name}، حذف شد *",parse_mode='markdown', reply_markup=main_admin_menu())
+            if admins_query.delete_admin(user_name):
+                bot.send_message(message.chat.id, f"*✅ ادمین با یوزرنیم: {user_name}، حذف شد *",parse_mode='markdown', reply_markup=main_admin_menu())
+            else:
+                bot.send_message(message.chat.id, '❌ کاربری با این نام پیدا نشد ')
         except Exception as e:
             bot.send_message(message.chat.id, f"An error occurred: {e}")
 

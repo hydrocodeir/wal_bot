@@ -1,0 +1,8 @@
+services:
+  holderbot:
+    image: primezdev/wal_bot:latest
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - ./data/:/code/data/
