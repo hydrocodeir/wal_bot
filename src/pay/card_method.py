@@ -42,6 +42,7 @@ def receive_photo_step(message, id, chat_id):
 def handle_payment_approval(call):
     chat_id = int(call.data.split("_")[2])
 
+
     if chat_id in pending_payments:
         data = pending_payments[chat_id]
         user_name = data['user_name']
