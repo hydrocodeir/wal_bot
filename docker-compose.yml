@@ -5,4 +5,4 @@ services:
     env_file:
       - .env
     volumes:
-      - ./data/:/code/data/
+      - ./data/wal.db:/app/src/db/wal.db
