@@ -25,8 +25,8 @@ install_wal_bot() {
 update_wal_bot() {
     echo -e "${YELLOW}Updating Wal Bot...${NC}"
     cd "$INSTALL_DIR"
-    cd /opt/walbot
     sudo docker compose pull && docker compose up -d
+    sudo docker compose restart
     echo -e "${GREEN}Wal Bot updated successfully!${NC}"
 }
 
