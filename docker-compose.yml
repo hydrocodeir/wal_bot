@@ -1,8 +1,8 @@
 services:
-  holderbot:
+  walbot:
     image: primezdev/wal_bot:latest
     restart: always
     env_file:
       - .env
     volumes:
-      - ./data/wal.db:/app/src/db/wal.db
+      - ./data/wal.db:/app/src/db
