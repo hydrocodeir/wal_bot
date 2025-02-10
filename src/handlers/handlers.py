@@ -509,6 +509,7 @@ def send_emails_(chat_id):
             data = get.json()
         except requests.exceptions.JSONDecodeError:
             bot.send_message(chat_id, "Error: Response is not a valid JSON")
+            os._exit(1)
             return
 
         settings = json.loads(data["obj"]["settings"])
