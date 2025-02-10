@@ -22,7 +22,8 @@ class priceing(base):
     id = Column('id', Integer, primary_key=True, autoincrement=True)
     traffic = Column('traffic', Integer)
     price = Column('price', Integer)
-
+    
+base.metadata.create_all(engine)
 
 # pricing query
 class PriceQuery:

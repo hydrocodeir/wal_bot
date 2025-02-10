@@ -56,9 +56,10 @@ class Panel_api:
         
     def show_users(self, inb_id):
         try:
+            headers = {"Cache-Control": "no-cache", "Pragma": "no-cache"}
             url = f"https://{panel}/panel/api/inbounds/get/{inb_id}"
-            get = s.get(url=url, headers=headers)
-            return get
+            res = s.get(url=url, headers=headers, timeout=15)
+            return res
         except:
             return False
         

@@ -504,7 +504,7 @@ def send_emails_(chat_id):
     get_admin_inb_id = admins_query.admin_data(chat_id)
     inb_id = get_admin_inb_id['inb_id']
     get = api.show_users(inb_id)
-    if get.status_code == 200:
+    if get:
         try:
             data = get.json()
         except requests.exceptions.JSONDecodeError:
