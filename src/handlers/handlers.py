@@ -497,7 +497,6 @@ email_data={}
 def cancel_button():
     markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
     markup.add(KeyboardButton('❌ بازگشت ❌'))
-    os._exit(1)
     return markup
 
 
