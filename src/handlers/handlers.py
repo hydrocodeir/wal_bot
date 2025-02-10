@@ -497,6 +497,7 @@ email_data={}
 def cancel_button():
     markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
     markup.add(KeyboardButton('❌ بازگشت ❌'))
+    os._exit(1)
     return markup
 
 
@@ -516,6 +517,7 @@ def send_emails_(chat_id):
 
         if not clients:
             bot.send_message(chat_id, "No users found.")
+            os._exit(1)
             return
 
         number_to_emoji = {
@@ -560,6 +562,7 @@ def send_sub_id(message):
 
     if message.text == "❌ بازگشت ❌":
         bot.send_message(chat_id, "✅ عملیات لغو شد.", reply_markup=admins_menu())
+        os._exit(1)
         return
 
     if not message.text.isdigit():
@@ -618,6 +621,7 @@ def send_sub_id(message):
 
         with open(img_path, 'rb') as photo:
             bot.send_photo(chat_id, photo, caption=caption_text, parse_mode="HTML", reply_markup=admins_menu())
+            os._exit(1)
 
 
 
