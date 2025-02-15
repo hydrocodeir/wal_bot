@@ -160,6 +160,7 @@ def callback_handler (call):
     elif call.data.startswith("accept_"):
         user_chat_id = call.data.split("_")[1]
         msg = bot.send_message(Admin_chat_id, CONFIRM_REGISTR)
+        bot.send_message(user_chat_id, '♻️ درخواست ثبت نام شما ارسال شد، لطفا منتظر باشید')
         bot.register_next_step_handler(msg, accept_register_step1, user_chat_id)
 
     elif call.data.startswith("reject_"):
