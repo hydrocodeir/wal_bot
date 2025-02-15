@@ -29,10 +29,7 @@ def login():
         'Accept': 'application/json',
     }
     res = s.post(url=url, json=data, headers=headers, timeout=15)
-    if res.status_code == 200:
-        print("Login successful")
-    else:
-        print("Login failed")
+
 
 def check_and_renew_session(response):
     if response.status_code == 401:  # Unauthorized
