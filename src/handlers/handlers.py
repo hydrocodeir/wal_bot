@@ -1,8 +1,8 @@
 from keyboards.keyboards import main_admin_menu, admins_menu, admins_controll, plans_controll, payment_methods
 from pay.card_method import receive_photo_step
-from db.query import admins_query, price_query
+from db.query import admins_query, price_query, card_number_query, help_message_query, registering_message
 from config import bot, Admin_chat_id
-from utils import change_help_message, change_card_id
+import utils
 import uuid
 import requests
 import datetime
@@ -26,8 +26,9 @@ def start_message(message):
         bot.send_message(message.chat.id, f'*{STRART_FOR_MAIN_ADMIN}*', parse_mode='markdown', reply_markup=main_admin_menu())
     else:
         markup = InlineKeyboardMarkup(row_width=1)
-        button1 = InlineKeyboardButton(text="👤 Login 👤", callback_data="login")
-        markup.add(button1)
+        button1 = InlineKeyboardButton(text="👤 Register 👤", callback_data="Register")
+        button2 = InlineKeyboardButton(text="👤 Login 👤", callback_data="login")
+        markup.add(button1, button2)
         bot.send_message(message.chat.id, '🎯 جهت استفاده از این ربات باید لاگین کنید.', reply_markup=markup)
 
 # admins page
@@ -124,16 +125,55 @@ def callback_handler (call):
         bot.register_next_step_handler(call.message, delete_plan)
 
     elif call.data == 'set_card':
+        card = card_number_query.show_card()
         markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         markup.add(KeyboardButton('❌ بازگشت ❌'))
-        msg = bot.send_message(chat_id, f'*💳 شماره حساب فعلی:\n{CARD_NUMBER}*\n\n ♻️لطفا شماره حساب جدید خود را وارد کنید:',parse_mode='markdown', reply_markup=markup)
+        msg = bot.send_message(chat_id, f'*💳 شماره حساب فعلی:\n{card}*\n\n ♻️لطفا شماره حساب جدید خود را وارد کنید:',parse_mode='markdown', reply_markup=markup)
         bot.register_next_step_handler(msg, save_new_card_id)
-
 
 
     elif call.data == "login":
         bot.edit_message_text(text='لطفا یوزرنیم خود را وارد کنید:',chat_id=chat_id, message_id=message_id)
         bot.register_next_step_handler(call.message, login_step1)
+
+    elif call.data == 'Register':
+        registering_page(call)
+
+    elif call.data.startswith("confirm_"):
+        username = call.data.split("_")[1]
+        name = call.data.split("_")[2]
+        user_chat_id = call.data.split("_")[3]
+        caption = (
+            f'*🧾در خواست ثبت نام جدید!*\n\n'
+            f'👤 *نام:* {name} \n'
+            f'👤 *یوزرنیم:* @{username}\n'
+        )
+        markup = InlineKeyboardMarkup(row_width=2)
+        button1 = InlineKeyboardButton(text='✅ تایید', callback_data=f'accept_{user_chat_id}')
+        button2 = InlineKeyboardButton(text='❌ رد کردن', callback_data=f'reject_{user_chat_id}')
+        markup.add(button1, button2)
+
+
+        bot.send_message(Admin_chat_id, caption, parse_mode="markdown", reply_markup=markup)
+
+
+    elif call.data.startswith("accept_"):
+        user_chat_id = call.data.split("_")[1]
+        msg = bot.send_message(Admin_chat_id, CONFIRM_REGISTR)
+        bot.register_next_step_handler(msg, accept_register_step1, user_chat_id)
+
+    elif call.data.startswith("reject_"):
+        username = call.data.split("_")[1]
+        name = call.data.split("_")[2]
+        user_chat_id = call.data.split("_")[3]
+        caption = (
+            f'*⚠️ قوانین ثبت نام توسط کاربر زیر رد شد!*\n\n'
+            f'👤 *نام:* {name} \n'
+            f'👤 *یوزرنیم:* @{username}\n'
+        )
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+        bot.send_message(user_chat_id,'❌شما قوانین را رد کردید\n➡️ /start ⬅️')
+        bot.send_message(Admin_chat_id, caption,parse_mode='markdown', reply_markup=main_admin_menu())
 
     elif call.data.startswith("del_"):
         email = call.data.split("_")[1]
@@ -147,20 +187,19 @@ def callback_handler (call):
         data[chat_id] = id
 
     elif call.data == 'card_payment':
+        get_card = card_number_query.show_card()
+        card = get_card['card_number']
         bot.delete_message(call.message.chat.id, call.message.message_id)
         id = data.get(chat_id, "نامشخص")
-        bot.send_message(chat_id=chat_id, text=f'*{SEND_DIPOSIT_PHOTO}\n💳 شماره کارت:*\n```{CARD_NUMBER}```', parse_mode='markdown')
-
+        bot.send_message(chat_id=chat_id, text=f'*{SEND_DIPOSIT_PHOTO}\n💳 شماره کارت:*\n```{card}```', parse_mode='markdown')
         bot.register_next_step_handler(call.message, receive_photo_step, id, chat_id)
         
-
 
     elif call.data == 'cancel':
         try:
             bot.delete_message(chat_id, message_id)
         except:
             pass
-
         bot.send_message(chat_id, text="✅ عملیات لغو شد!", reply_markup=admins_menu())
 
 # add plan
@@ -273,7 +312,7 @@ def add_admin_step4 (message, user_name, password, trafiic):
         try:
             inb_id = int(message.text)
             if admins_query.add_admin(user_name, password, trafiic, inb_id):
-                bot.send_message(message.chat.id, f'✅ ادمین اضافه شد: \n\n👤username: {user_name} \n\n🔐password: {password} \n\n🔋total trafiic: {trafiic}', reply_markup=main_admin_menu())
+                bot.send_message(message.chat.id, f'✅ ادمین اضافه شد: \n👤username: {user_name} \n🔐password: {password} \n🔋total trafiic: {trafiic}', reply_markup=main_admin_menu())
             else:
                 bot.send_message(message.chat.id, 'admin already exists.')
         except ValueError:
@@ -455,14 +494,14 @@ def add_user_f(chat_id):
         img.save('last_qrcode.png', scale=10, dark='darkblue', data_dark='steelblue')
         img_path = 'last_qrcode.png'
         caption_text = (
-            f"🪪*نام کاربری:*  {user_email[chat_id]}\n"
-            f"⌛*تعداد روز:*  {user_days[chat_id]}\n"
-            f"🔋*سقف ترافیک:*  {gb} GB\n\n"
-            f"🔗*لینک سابسکریپشن:*\n"
-            f"```\n{sub_url}\n```")
+            f"🪪<b>*نام کاربری:*  {user_email[chat_id]}</b>\n"
+            f"⌛<b>*تعداد روز:*  {user_days[chat_id]}</b>\n"
+            f"🔋<b>*سقف ترافیک:*  {gb} GB</b>\n\n"
+            f"🔗<b>*لینک سابسکریپشن:</b>\n"
+            f"<code>\n{sub_url}\n</code>")
         
         with open(img_path, 'rb') as photo:
-            bot.send_photo(chat_id, photo, caption=caption_text, parse_mode="MarkdownV2", reply_markup=admins_menu())
+            bot.send_photo(chat_id, photo, caption=caption_text, parse_mode="HTML", reply_markup=admins_menu())
 
         clear_user_data(chat_id)
     else:
@@ -561,7 +600,6 @@ def send_sub_id(message):
 
     if message.text == "❌ بازگشت ❌":
         bot.send_message(chat_id, "✅ عملیات لغو شد.", reply_markup=admins_menu())
-        os._exit(1)
         return
 
     if not message.text.isdigit():
@@ -620,7 +658,7 @@ def send_sub_id(message):
 
         with open(img_path, 'rb') as photo:
             bot.send_photo(chat_id, photo, caption=caption_text, parse_mode="HTML", reply_markup=admins_menu())
-            os._exit(1)
+            
 
 
 
@@ -814,11 +852,9 @@ def save_new_help_message(message):
     if message.text == '❌ بازگشت ❌':
         return bot.send_message(message.chat.id, "✅ عملیات ویرایش راهنما لغو شد.", reply_markup=main_admin_menu())
 
-
     new_text = message.text.strip()
-    if change_help_message(new_text):
+    if help_message_query.add_message(new_text):
         bot.send_message(message.chat.id, '✅متن راهنما با موفقیت تغییر یافت.', reply_markup=main_admin_menu())
-        os._exit(1)
 
     else:
         bot.send_message(message.chat.id, 'خطا هنگام نوشتن در فایل', reply_markup=main_admin_menu())
@@ -828,11 +864,61 @@ def save_new_card_id(message):
     if message.text == '❌ بازگشت ❌':
         return bot.send_message(message.chat.id, "✅ عملیات ویرایش راهنما لغو شد.", reply_markup=main_admin_menu())
 
-
     new_card = message.text.strip()
-    if change_card_id(new_card):
+    if card_number_query.add(new_card):
         bot.send_message(message.chat.id, '✅شماره حساب با موفقیت تغییر یافت', reply_markup=main_admin_menu())
-        os._exit(1)
 
     else:
         bot.send_message(message.chat.id, 'خطا هنگام نوشتن در فایل', reply_markup=main_admin_menu())
+
+# registering
+def registering_page(call):
+    register = registering_message.show_message()
+    register = register['message']
+    chat_id = call.message.chat.id
+    username = call.from_user.username
+    name = call.from_user.first_name
+    
+
+    callback_data_confirm = f"confirm_{username}_{name}_{chat_id}"
+    callback_data_reject = f"reject_{username}_{name}_{chat_id}"
+    markup = InlineKeyboardMarkup(row_width=1)
+    button1 = InlineKeyboardButton(text='✅ تایید قوانین و ثبت درخواست ثبت نام', callback_data=callback_data_confirm)
+    button2 = InlineKeyboardButton(text='❌ رد کردن قوانین', callback_data=callback_data_reject)
+    markup.add(button1, button2)
+
+    bot.send_message(chat_id=chat_id, text=register, reply_markup=markup )
+
+# save new registering message
+def save_new_register_message(message):
+    if message.text == '❌ بازگشت ❌':
+        return bot.send_message(message.chat.id, "✅ عملیات ویرایش راهنما لغو شد.", reply_markup=main_admin_menu())
+    
+    new_text = message.text.strip()
+    if registering_message.add_message(new_text):
+        bot.send_message(message.chat.id, '✅ متن ثبت نام باموفقیت تغییر یافت', reply_markup=main_admin_menu())
+
+# accept registering step1
+def accept_register_step1(message, user_chat_id):
+    username = message.text
+    bot.send_message(Admin_chat_id, '2️⃣مرحله دوم\nحالا پسورد اختصاصی این نماینده را به انگلیسی ارسال کنید:')
+    bot.register_next_step_handler(message, lambda msg: accept_register_step2(msg, user_chat_id, username))
+
+def accept_register_step2(message, user_chat_id, username):
+    password = message.text
+    bot.send_message(Admin_chat_id, '3️⃣مرحله سوم\nحالا عدد اینباند مختص این نماینده رو وارد کنید:\n(توجه کنید که اینباند خالی باشه و نماینده دیگری روی اون فعال نباشه)')
+    bot.register_next_step_handler(message, lambda msg: accept_register_step3(msg, user_chat_id, username, password))
+
+def accept_register_step3(message, user_chat_id, username, password):
+    traffic = 0
+    inb_id = int(message.text)
+    if admins_query.add_admin(username, password, traffic, inb_id):
+        bot.send_message(Admin_chat_id,'✅ اطلاعات در دیتابیس اضافه و به نماینده ارسال شد', reply_markup=main_admin_menu())
+        caption = (
+            f'*✅در خواست ثبت نام شما تایید شد!*\n\n'
+            f'👤 *یوزنیم* {username} \n'
+            f'👤 *پسورد:* {password}\n➡️ /start  ⬅️'
+        )
+        bot.send_message(user_chat_id, caption, parse_mode='markdown')
+    else:    
+        bot.send_message(Admin_chat_id, '❌ خطا در افزودن اطلاعات به دیتابیس!', reply_markup=main_admin_menu())

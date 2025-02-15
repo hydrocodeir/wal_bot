@@ -7,7 +7,7 @@ from db.query import price_query
 # main admin menu
 def main_admin_menu ():
     reply_keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False,row_width=2)
-    reply_keyboard.add('👤 نمایندگان', '⚙️ پلن ها', '📘 متن راهنما')
+    reply_keyboard.add('👤 نمایندگان', '⚙️ پلن ها', '📘 متن راهنما', '🧾 متن ثبت نام')
     return reply_keyboard
 
 

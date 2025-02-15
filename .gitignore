@@ -1,2 +1,5 @@
 
 .codegpt
+.env
+__pycache__/
+*.png

@@ -22,8 +22,122 @@ class priceing(base):
     id = Column('id', Integer, primary_key=True, autoincrement=True)
     traffic = Column('traffic', Integer)
     price = Column('price', Integer)
+
+class Card(base):
+    __tablename__ = 'card_number'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    card_number = Column(String, nullable=False)
+
+class HelpMessage(base):
+    __tablename__ = 'help_message'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    message = Column(String, nullable=False)
+
+class RegisteringMessage(base):
+    __tablename__ = 'registering_message'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    message = Column(String, nullable=False)
+
     
 base.metadata.create_all(engine)
+
+
+# help message query
+class MessageQuery:
+    def add_message(self, new_message):
+        try:
+            message = session.query(HelpMessage).filter(HelpMessage.id == 1).first()
+            if message:
+                message.message = new_message
+            else:
+                message = HelpMessage(id=1, message=new_message)
+                session.add(message)
+            session.commit()
+            return True
+        except:
+            return False
+        
+    def show_message(self):
+        try:
+            message = session.query(HelpMessage).filter(HelpMessage.id==1).first()
+            if not message:
+                return {
+                "message": '⚠️ متن راهنما خالی است'
+                }
+            message_data = {
+                "message": message.message
+            }
+            return message_data
+        except:
+            return False
+        
+help_message_query = MessageQuery()
+
+# register message query
+class RegisterQuery:
+    def add_message(sel, new_message):
+        try:
+            message = session.query(RegisteringMessage).filter(RegisteringMessage.id==1).first()
+            if message:
+                message.message = new_message
+            else:
+                message = RegisteringMessage(id=1, message=new_message)
+                session.add(message)
+            session.commit()
+            return True
+        except:
+            return False
+        
+    def show_message(self):
+        try:
+            message = session.query(RegisteringMessage).filter(RegisteringMessage.id==1).first()
+            if not message:
+                return {
+                "message": '⚠️ متن قوانین ثبت نام خالی است'
+                }
+            message_data = {
+                "message": message.message
+            }
+            return message_data
+        except:
+            return False
+
+registering_message = RegisterQuery()
+
+
+# card query
+class CardQuery:
+    def add(self, new_card):
+        try:
+            card = session.query(Card).filter(Card.id == 1).first()
+            if card:
+                card.card_number = new_card
+            else:
+                card = Card(id=1, card_number=new_card)
+                session.add(card)
+            session.commit()
+            return True
+        except:
+            return False
+
+    def show_card(self):
+        try:
+            card = session.query(Card).filter(Card.id == 1).first()
+            if not card:
+                return '⚠️ شماره کارت خالی است'
+            card_data = {
+                'card_number': card.card_number
+            }
+            return card_data
+        except:
+            return False
+
+card_number_query = CardQuery()
+
+
 
 # pricing query
 class PriceQuery:
@@ -217,3 +331,8 @@ class AdminsQuery:
 
 admins_query = AdminsQuery()
 
+
+
+# #aa = card_number_query.add('1289')
+# aa = card_number_query.show_card()
+# print(aa['card_number'])
