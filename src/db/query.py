@@ -127,7 +127,9 @@ class CardQuery:
         try:
             card = session.query(Card).filter(Card.id == 1).first()
             if not card:
-                return '⚠️ شماره کارت خالی است'
+                return {
+                'card_number': card.card_number
+            }
             card_data = {
                 'card_number': card.card_number
             }
@@ -332,7 +334,3 @@ class AdminsQuery:
 admins_query = AdminsQuery()
 
 
-
-# #aa = card_number_query.add('1289')
-# aa = card_number_query.show_card()
-# print(aa['card_number'])
