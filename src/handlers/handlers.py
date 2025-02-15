@@ -126,6 +126,7 @@ def callback_handler (call):
 
     elif call.data == 'set_card':
         card = card_number_query.show_card()
+        card = card['card_number']
         markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
         markup.add(KeyboardButton('❌ بازگشت ❌'))
         msg = bot.send_message(chat_id, f'*💳 شماره حساب فعلی:\n{card}*\n\n ♻️لطفا شماره حساب جدید خود را وارد کنید:',parse_mode='markdown', reply_markup=markup)
