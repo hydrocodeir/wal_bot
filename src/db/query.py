@@ -128,7 +128,7 @@ class CardQuery:
             card = session.query(Card).filter(Card.id == 1).first()
             if not card:
                 return {
-                'card_number': card.card_number
+                'card_number': '123456789'
             }
             card_data = {
                 'card_number': card.card_number
@@ -138,6 +138,9 @@ class CardQuery:
             return False
 
 card_number_query = CardQuery()
+card = card_number_query.show_card()
+card = card['card_number']
+print(card)
 
 
 
