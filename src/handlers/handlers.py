@@ -23,13 +23,22 @@ api = Panel_api()
 def start_message(message):
     chat_id = message.chat.id
     if chat_id == Admin_chat_id:
-        bot.send_message(message.chat.id, f'*{STRART_FOR_MAIN_ADMIN}*', parse_mode='markdown', reply_markup=main_admin_menu())
+        bot.send_message(Admin_chat_id, f'*{STRART_FOR_MAIN_ADMIN}*', parse_mode='markdown', reply_markup=main_admin_menu())
     else:
+        user_id = message.from_user.username
+        user_name = message.from_user.first_name
+        caption = (
+            f'*🔔Notif*\n\n'
+            f'*⬇️کاربری با مشخصات زیر ربات رو استارت کرد*\n'
+            f'👤 *نام:* {user_name}\n'
+            f'🆔 *یوزنیم* {user_id} \n'
+        )
+        bot.send_message(Admin_chat_id, caption, parse_mode='markdown')
         markup = InlineKeyboardMarkup(row_width=1)
         button1 = InlineKeyboardButton(text="👤 Register 👤", callback_data="Register")
         button2 = InlineKeyboardButton(text="👤 Login 👤", callback_data="login")
         markup.add(button1, button2)
-        bot.send_message(message.chat.id, '🎯 جهت استفاده از این ربات باید لاگین کنید.', reply_markup=markup)
+        bot.send_message(message.chat.id, '🎯 جهت استفاده از این ربات باید ریجستر یا لاگین کنید.', reply_markup=markup)
 
 # admins page
 def admins_page(message):
@@ -68,10 +77,10 @@ def plans_page(message):
 def show_plans_with_button(message):
     plans = price_query.show_plans()
     if not plans:
-        bot.send_message(message, "❌هیچ پلنی موجود نیست.")
+        bot.send_message(message, "❕درحال حاضر هیچ پلن خریدی موجود نیستس")
         return
     else:
-        response = "📋* لیست پلن ها:*\n\n(قیمت ها به تومان هست!)"
+        response = "📋* لیست پلن های موجود\n(قیمت ها به تومان!)"
         markup = InlineKeyboardMarkup(row_width=1)
         
         for plan in plans:
@@ -496,9 +505,9 @@ def add_user_f(chat_id):
         img.save('last_qrcode.png', scale=10, dark='darkblue', data_dark='steelblue')
         img_path = 'last_qrcode.png'
         caption_text = (
-            f"🪪<b>*نام کاربری:*  {user_email[chat_id]}</b>\n"
-            f"⌛<b>*تعداد روز:*  {user_days[chat_id]}</b>\n"
-            f"🔋<b>*سقف ترافیک:*  {gb} GB</b>\n\n"
+            f"🪪<b>*نام کاربری:*  </b>{user_email[chat_id]}\n"
+            f"⌛<b>*تعداد روز:*  </b>{user_days[chat_id]}\n"
+            f"🔋<b>*سقف ترافیک:*  </b>{gb} GB\n\n"
             f"🔗<b>*لینک سابسکریپشن:</b>\n"
             f"<code>\n{sub_url}\n</code>")
         
