@@ -7,9 +7,22 @@ from db.query import price_query
 # main admin menu
 def main_admin_menu ():
     reply_keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False,row_width=2)
-    reply_keyboard.add('👤 نمایندگان', '⚙️ پلن ها', '📘 متن راهنما', '🧾 متن ثبت نام')
+    reply_keyboard.add('👤 نمایندگان', '⚙️ تنظیمات')
     return reply_keyboard
 
+# setting menu
+def setting_menu():
+    reply_keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False, row_width=2)
+    reply_keyboard.add('👤 نمایندگان', '💵 پلن ها', '📘 متن راهنما', '🧾 متن ثبت نام', '🔔 نوتیف ها', '🔙 بازگشت')
+    return reply_keyboard
+
+# change notif status
+def notif_status_menu():
+    markup = InlineKeyboardMarkup(row_width=1)
+    button1 = InlineKeyboardButton(text='♻️ استارت ♻️', callback_data='change_start_notif_status')
+    button2 = InlineKeyboardButton(text='♻️ حدف کاربر ♻️', callback_data='change_delete_notif_status')
+    markup.add(button1, button2)
+    return markup
 
 
 # admins menu

@@ -12,7 +12,7 @@ class admins(base):
 
     chat_id = Column('chat_id', Integer, unique=True)
     user_name = Column('user_name', String, unique=True, primary_key=True)
-    password = Column('password', String)
+    password = Column('password', String, unique=True, primary_key=True)
     traffic = Column('traffic', Integer)
     inb_id = Column('inb_id', Integer)
 
