@@ -1,7 +1,8 @@
-from keyboards.keyboards import main_admin_menu, admins_menu, admins_controll, plans_controll, payment_methods
+from keyboards.keyboards import main_admin_menu, setting_menu, admins_menu, notif_status_menu, admins_controll, plans_controll, payment_methods
 from pay.card_method import receive_photo_step
-from db.query import admins_query, price_query, card_number_query, help_message_query, registering_message
+from db.query import admins_query, price_query, card_number_query, help_message_query, registering_message, setting_query
 from config import bot, Admin_chat_id
+from handlers.notifications import notif_setting
 import utils
 import uuid
 import requests
@@ -23,13 +24,18 @@ api = Panel_api()
 def start_message(message):
     chat_id = message.chat.id
     if chat_id == Admin_chat_id:
-        bot.send_message(message.chat.id, f'*{STRART_FOR_MAIN_ADMIN}*', parse_mode='markdown', reply_markup=main_admin_menu())
+        bot.send_message(Admin_chat_id, f'*{STRART_FOR_MAIN_ADMIN}*', parse_mode='markdown', reply_markup=main_admin_menu())
     else:
-        markup = InlineKeyboardMarkup(row_width=1)
-        button1 = InlineKeyboardButton(text="👤 Register 👤", callback_data="Register")
-        button2 = InlineKeyboardButton(text="👤 Login 👤", callback_data="login")
-        markup.add(button1, button2)
-        bot.send_message(message.chat.id, '🎯 جهت استفاده از این ربات باید لاگین کنید.', reply_markup=markup)
+        if setting_query.show_start_notif() == True:
+            notif_setting.start_notif(message)
+        if admins_query.admin_data(chat_id):
+            bot.send_message(message.chat.id, START_FOR_ADMINS)
+        else:
+            markup = InlineKeyboardMarkup(row_width=1)
+            button1 = InlineKeyboardButton(text="👤 Register 👤", callback_data="Register")
+            button2 = InlineKeyboardButton(text="👤 Login 👤", callback_data="login")
+            markup.add(button1, button2)
+            bot.send_message(message.chat.id, '🎯 جهت استفاده از این ربات باید ریجستر یا لاگین کنید.', reply_markup=markup)
 
 # admins page
 def admins_page(message):
@@ -48,6 +54,38 @@ def admins_page(message):
                 f"\n"
             )
         bot.reply_to(message, response, parse_mode='markdown', reply_markup=admins_controll())
+
+# settings page/menu
+def settings_page(message):
+    bot.send_message(message.chat.id, '⚙️ وارد منوی تنظیمات شدید', reply_markup=setting_menu())
+
+def return_to_main_menu(message):
+    bot.send_message(message.chat.id, '🔙 به منوی اصلی برگشتید', reply_markup=main_admin_menu())
+
+# notif page
+def get_notif_status_text():
+    start_notif = setting_query.show_start_notif()
+    create_notif = setting_query.show_create_notif()
+    delete_notif = setting_query.show_delete_notif()
+
+    start_notif_status = '🟢' if start_notif else '🔴'
+    delete_notif_status = '🟢' if delete_notif else '🔴'
+
+    response = (
+        f"🔔 *Notification status*\n"
+        f"*وضعیت نوتیفیکیشن‌ها برای شما:*\n\n"
+        f"استارت ربات:  {start_notif_status}\n"
+        f"حذف کاربر توسط نمایندگان:  {delete_notif_status}\n"
+    )
+    return response
+
+def notif_page(message):
+
+    response = get_notif_status_text()
+    bot.send_message(message.chat.id, response, parse_mode='markdown', reply_markup=notif_status_menu())
+
+    
+
 # plans page
 def plans_page(message):
     plans = price_query.show_plans()
@@ -68,10 +106,10 @@ def plans_page(message):
 def show_plans_with_button(message):
     plans = price_query.show_plans()
     if not plans:
-        bot.send_message(message, "❌هیچ پلنی موجود نیست.")
+        bot.send_message(message, "❕درحال حاضر هیچ پلن خریدی موجود نیستس")
         return
     else:
-        response = "📋* لیست پلن ها:*\n\n(قیمت ها به تومان هست!)"
+        response = "📋* لیست پلن های موجود (قیمت ها به تومان!)*"
         markup = InlineKeyboardMarkup(row_width=1)
         
         for plan in plans:
@@ -144,6 +182,8 @@ def callback_handler (call):
         username = call.data.split("_")[1]
         name = call.data.split("_")[2]
         user_chat_id = call.data.split("_")[3]
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+        bot.send_message(user_chat_id, '♻️ درخواست ثبت نام شما ارسال شد، لطفا منتظر باشید...')
         caption = (
             f'*🧾در خواست ثبت نام جدید!*\n\n'
             f'👤 *نام:* {name} \n'
@@ -151,18 +191,23 @@ def callback_handler (call):
         )
         markup = InlineKeyboardMarkup(row_width=2)
         button1 = InlineKeyboardButton(text='✅ تایید', callback_data=f'accept_{user_chat_id}')
-        button2 = InlineKeyboardButton(text='❌ رد کردن', callback_data=f'reject_{user_chat_id}')
+        button2 = InlineKeyboardButton(text='❌ رد کردن', callback_data=f'rejectt_{user_chat_id}')
         markup.add(button1, button2)
 
-
         bot.send_message(Admin_chat_id, caption, parse_mode="markdown", reply_markup=markup)
+
+    elif call.data.startswith("rejectt_"):
+        user_chat_id = call.data.split("_")[1]
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+        bot.send_message(user_chat_id, '🔴 درخواست ثبت نام شما رد شد.')
+
 
 
     elif call.data.startswith("accept_"):
         user_chat_id = call.data.split("_")[1]
         msg = bot.send_message(Admin_chat_id, CONFIRM_REGISTR)
-        bot.send_message(user_chat_id, '♻️ درخواست ثبت نام شما ارسال شد، لطفا منتظر باشید')
         bot.register_next_step_handler(msg, accept_register_step1, user_chat_id)
+        
 
     elif call.data.startswith("reject_"):
         username = call.data.split("_")[1]
@@ -204,6 +249,18 @@ def callback_handler (call):
             pass
         bot.send_message(chat_id, text="✅ عملیات لغو شد!", reply_markup=admins_menu())
 
+    elif call.data == 'change_start_notif_status':
+        current_status = setting_query.show_start_notif()
+        new_status = not current_status
+        setting_query.change_start_notif(new_status)
+        bot.edit_message_text(chat_id=chat_id, message_id=message_id, text=get_notif_status_text(), parse_mode='markdown', reply_markup=notif_status_menu())
+
+    elif call.data == 'change_delete_notif_status':
+        current_status = setting_query.show_delete_notif()
+        new_status = not current_status
+        setting_query.change_delete_notif(new_status)
+        bot.edit_message_text(chat_id=chat_id, message_id=message_id, text=get_notif_status_text(), parse_mode='markdown', reply_markup=notif_status_menu())
+
 # add plan
 def add_plan_step1(message):
     if message.text == '❌ بازگشت ❌':
@@ -229,7 +286,7 @@ def add_plan_step2(message, traffic):
 # change plan
 def change_plan_step1(message):
     if message.text == '❌ بازگشت ❌':
-        return bot.send_message(message.chat.id, "✅ عملیات ویرایش راهنما لغو شد.", reply_markup=main_admin_menu())
+        return bot.send_message(message.chat.id, "✅ عملیات ویرایش راهنما لغو شد.", reply_markup=setting_menu())
     try:
         id = message.text
         bot.send_message(message.chat.id, CHANGE_PLAN2)
@@ -239,7 +296,7 @@ def change_plan_step1(message):
 
 def change_plan_step2(message, id):
     if message.text == '❌ بازگشت ❌':
-        return bot.send_message(message.chat.id, "✅ عملیات ویرایش راهنما لغو شد.", reply_markup=main_admin_menu())
+        return bot.send_message(message.chat.id, "✅ عملیات ویرایش راهنما لغو شد.", reply_markup=setting_menu())
     try:
         traffic = message.text
         bot.send_message(message.chat.id, CHANGE_PLAN3)
@@ -249,13 +306,13 @@ def change_plan_step2(message, id):
 
 def change_plan_step3(message, id, traffic):
     if message.text == '❌ بازگشت ❌':
-        return bot.send_message(message.chat.id, "✅ عملیات ویرایش راهنما لغو شد.", reply_markup=main_admin_menu())
+        return bot.send_message(message.chat.id, "✅ عملیات ویرایش راهنما لغو شد.", reply_markup=setting_menu())
     try:
         price = message.text
         if price_query.edite_plan(id, traffic, price):
-            bot.send_message(message.chat.id, '✅تغییرات با موفقیت اعمال شد', reply_markup=main_admin_menu())
+            bot.send_message(message.chat.id, '✅تغییرات با موفقیت اعمال شد', reply_markup=setting_menu())
         else:
-            bot.send_message(message.chat.id, '❌ مقادریر واردشده صحیح نیستن\n(از صحت ایدی پلن اطمینان حاصل کنید!!)', reply_markup=main_admin_menu())
+            bot.send_message(message.chat.id, '❌ مقادریر واردشده صحیح نیستن\n(از صحت ایدی پلن اطمینان حاصل کنید!!)', reply_markup=setting_menu())
     except ValueError:
         bot.send_message(message.chat.id, '❌ Please send a valid world.')
 
@@ -496,10 +553,10 @@ def add_user_f(chat_id):
         img.save('last_qrcode.png', scale=10, dark='darkblue', data_dark='steelblue')
         img_path = 'last_qrcode.png'
         caption_text = (
-            f"🪪<b>*نام کاربری:*  {user_email[chat_id]}</b>\n"
-            f"⌛<b>*تعداد روز:*  {user_days[chat_id]}</b>\n"
-            f"🔋<b>*سقف ترافیک:*  {gb} GB</b>\n\n"
-            f"🔗<b>*لینک سابسکریپشن:</b>\n"
+            f"🪪<b>نام کاربری:  </b>{user_email[chat_id]}\n"
+            f"⌛<b>تعداد روز:  </b>{user_days[chat_id]}\n"
+            f"🔋<b>سقف ترافیک:  </b>{gb} GB\n\n"
+            f"🔗<b>لینک سابسکریپشن:</b>\n"
             f"<code>\n{sub_url}\n</code>")
         
         with open(img_path, 'rb') as photo:
@@ -507,7 +564,7 @@ def add_user_f(chat_id):
 
         clear_user_data(chat_id)
     else:
-        bot.send_message(chat_id, f"Failed to add user. Error: {request.text}")
+        bot.send_message(chat_id, f"Failed to add user. Error: {request.text}", reply_markup=admins_menu())
 
 def clear_user_data(chat_id):
     user_email.pop(chat_id, None)
@@ -551,10 +608,12 @@ def send_emails_(chat_id):
         except requests.exceptions.JSONDecodeError:
             os._exit(1)
             return
-
-        settings = json.loads(data["obj"]["settings"])
-        clients = settings["clients"]
-
+        try:
+            settings = json.loads(data["obj"]["settings"])
+            clients = settings["clients"]
+        except:
+            return bot.send_message(chat_id, '⚠️ در مقادیر اشتراک شما مشکلی هست!', reply_markup=admins_menu())
+        
         if not clients:
             bot.send_message(chat_id, "No users found.")
             os._exit(1)
@@ -841,6 +900,11 @@ def delete_user_step2(call, email):
         return
     else:
         if response.status_code == 200:
+            if setting_query.show_delete_notif():
+                admin_data= admins_query.admin_data(chat_id)
+                admin_name = admin_data['user_name']
+                notif_setting.delete_notif(admin_name, email)
+
             bot.send_message(
                 chat_id=chat_id,
                 text=f'*✅ کاربر {email} با موفقیت حذف شد.*',
@@ -852,26 +916,26 @@ def delete_user_step2(call, email):
 # save new help message
 def save_new_help_message(message):
     if message.text == '❌ بازگشت ❌':
-        return bot.send_message(message.chat.id, "✅ عملیات ویرایش راهنما لغو شد.", reply_markup=main_admin_menu())
+        return bot.send_message(message.chat.id, "✅ عملیات ویرایش راهنما لغو شد.", reply_markup=setting_menu())
 
     new_text = message.text.strip()
     if help_message_query.add_message(new_text):
-        bot.send_message(message.chat.id, '✅متن راهنما با موفقیت تغییر یافت.', reply_markup=main_admin_menu())
+        bot.send_message(message.chat.id, '✅متن راهنما با موفقیت تغییر یافت.', reply_markup=setting_menu())
 
     else:
-        bot.send_message(message.chat.id, 'خطا هنگام نوشتن در فایل', reply_markup=main_admin_menu())
+        bot.send_message(message.chat.id, 'خطا هنگام نوشتن در فایل', reply_markup=setting_menu())
 
 # save new card numb
 def save_new_card_id(message):
     if message.text == '❌ بازگشت ❌':
-        return bot.send_message(message.chat.id, "✅ عملیات ویرایش راهنما لغو شد.", reply_markup=main_admin_menu())
+        return bot.send_message(message.chat.id, "✅ عملیات ویرایش راهنما لغو شد.", reply_markup=setting_menu())
 
     new_card = message.text.strip()
     if card_number_query.add(new_card):
-        bot.send_message(message.chat.id, '✅شماره حساب با موفقیت تغییر یافت', reply_markup=main_admin_menu())
+        bot.send_message(message.chat.id, '✅شماره حساب با موفقیت تغییر یافت', reply_markup=setting_menu())
 
     else:
-        bot.send_message(message.chat.id, 'خطا هنگام نوشتن در فایل', reply_markup=main_admin_menu())
+        bot.send_message(message.chat.id, 'خطا هنگام نوشتن در فایل', reply_markup=setting_menu())
 
 # registering
 def registering_page(call):
@@ -919,7 +983,7 @@ def accept_register_step3(message, user_chat_id, username, password):
         caption = (
             f'*✅در خواست ثبت نام شما تایید شد!*\n\n'
             f'👤 *یوزنیم* {username} \n'
-            f'👤 *پسورد:* {password}\n➡️ /start  ⬅️'
+            f'🔑 *پسورد:* {password}\n➡️ /start  ⬅️'
         )
         bot.send_message(user_chat_id, caption, parse_mode='markdown')
     else:    

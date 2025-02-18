@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String
+from sqlalchemy import create_engine, Column, Integer, String, Boolean
 from sqlalchemy.orm import sessionmaker, declarative_base
 
 
@@ -12,7 +12,7 @@ class admins(base):
 
     chat_id = Column('chat_id', Integer, unique=True)
     user_name = Column('user_name', String, unique=True, primary_key=True)
-    password = Column('password', String)
+    password = Column('password', String, unique=True, primary_key=True)
     traffic = Column('traffic', Integer)
     inb_id = Column('inb_id', Integer)
 
@@ -41,8 +41,105 @@ class RegisteringMessage(base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     message = Column(String, nullable=False)
 
+class BotSettings(base):
+    __tablename__ = 'settings'
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    start_notif = Column('start_notif', Boolean, default=True)
+    create_notif = Column('creat_notif', Boolean, default=True)
+    delete_notif = Column('delete_notif', Boolean, default=True)
+
     
 base.metadata.create_all(engine)
+
+# default settings
+def initialize_settings():
+    try:
+        settings = session.query(BotSettings).first()
+        if not settings:
+            difault_settings = BotSettings(
+                start_notif=True,
+                create_notif=True,
+                delete_notif=True
+            )
+            session.add(difault_settings)
+            session.commit()
+        else:
+            pass
+    except:
+        pass
+initialize_settings()
+
+# settings query
+class SettingsQuery:
+    def change_start_notif(self, new_sttings):
+        try:
+            update = session.query(BotSettings).first()
+            if update:
+                update.start_notif = new_sttings
+                session.commit()
+                return True
+            else:
+                return False
+        except:
+            return False
+        
+    def show_start_notif(self):
+        try:
+            settings = session.query(BotSettings).first()
+            if settings:
+                return settings.start_notif
+            else:
+                return False
+        except:
+            return False
+        
+    def change_create_notif(self, new_setting):
+        try:
+            updata = session.query(BotSettings).first()
+            if updata:
+                updata.create_notif = new_setting
+                session.commit()
+                return True
+            else:
+                return False
+        except:
+            return False
+        
+    def show_create_notif(self):
+        try:
+            settings = session.query(BotSettings).first()
+            if settings:
+                return settings.create_notif
+            else:
+                return False
+        except:
+            return False
+
+        
+    def change_delete_notif(self, new_setting):
+        try:
+            update = session.query(BotSettings).first()
+            if update:
+                update.delete_notif = new_setting
+                session.commit()
+                return True
+            else:
+                return False
+        except:
+            return False
+        
+    def show_delete_notif(self):
+        try:
+            settings = session.query(BotSettings).first()
+            if settings:
+                return settings.delete_notif
+            else:
+                return False
+        except:
+            return False
+        
+setting_query = SettingsQuery()
 
 
 # help message query
@@ -138,10 +235,6 @@ class CardQuery:
             return False
 
 card_number_query = CardQuery()
-card = card_number_query.show_card()
-card = card['card_number']
-print(card)
-
 
 
 # pricing query
