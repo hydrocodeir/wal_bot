@@ -16,6 +16,7 @@ class notif_for_main_admin:
         bot.send_message(Admin_chat_id, caption, parse_mode='markdown')
 
 
+
     def delete_notif(self, admin_name, email):
         caption = (
             f'🟡*Delete notif*\n'
