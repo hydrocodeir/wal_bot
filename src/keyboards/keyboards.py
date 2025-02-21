@@ -34,12 +34,15 @@ def setting_menu():
 def notif_status_menu():
     markup = InlineKeyboardMarkup(row_width=1)
     button1 = InlineKeyboardButton(
-        text="♻️ استارت ♻️", callback_data="change_start_notif_status"
+        text="🔄️ استارت", callback_data="change_start_notif_status"
     )
     button2 = InlineKeyboardButton(
-        text="♻️ حدف کاربر ♻️", callback_data="change_delete_notif_status"
+        text="🔄️ ایجاد کاربر", callback_data="change_create_notif_status"
     )
-    markup.add(button1, button2)
+    button3 = InlineKeyboardButton(
+    text="🔄️ حذف کاربر", callback_data="change_delete_notif_status"
+    )
+    markup.add(button1, button2, button3)
     return markup
 
 

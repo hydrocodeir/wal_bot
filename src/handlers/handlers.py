@@ -16,7 +16,7 @@ from db.query import (
     registering_message,
     setting_query,
 )
-from config import bot, Admin_chat_id
+from config import bot, Admin_chat_id, PANEL_ADDRES, SUB_ADDRES
 from handlers.notifications import notif_setting
 import utils
 import uuid
@@ -28,6 +28,7 @@ import os
 import time
 import segno
 import random
+import json
 from messages.messages import messages_setting
 from telebot.types import (
     InlineKeyboardButton,
@@ -35,9 +36,11 @@ from telebot.types import (
     KeyboardButton,
     ReplyKeyboardMarkup,
 )
-from api import *
+from api import PanelAPI
 
-api = Panel_api()
+api = PanelAPI()
+data = {"username": os.getenv("PANEL_USER"), "password": os.getenv("PANEL_PASS")}
+sub = SUB_ADDRES
 
 
 # start message
@@ -112,14 +115,16 @@ def get_notif_status_text():
     create_notif = setting_query.show_create_notif()
     delete_notif = setting_query.show_delete_notif()
 
-    start_notif_status = "🟢" if start_notif else "🔴"
-    delete_notif_status = "🟢" if delete_notif else "🔴"
+    start_notif_status = "✅" if start_notif else "❌"
+    create_notif_status = "✅" if create_notif else "❌"
+    delete_notif_status = "✅" if delete_notif else "❌"
 
     response = (
-        f"🔔 *Notification status*\n"
-        f"*وضعیت نوتیفیکیشن‌ها برای شما:*\n\n"
-        f"استارت ربات:  {start_notif_status}\n"
-        f"حذف کاربر توسط نمایندگان:  {delete_notif_status}\n"
+        f"🔔 <b>Notification Status</b>\n"
+        f"<b>وضعیت نوتیفیکیشن‌ها:</b>\n\n"
+        f"<b>{start_notif_status} استارت ربات</b> \n"
+        f"<b>{create_notif_status} ساخت کاربر توسط نماینده</b> \n"
+        f"<b>{delete_notif_status} حذف کاربر توسط نمایندگان</b> \n"
     )
     return response
 
@@ -130,7 +135,7 @@ def notif_page(message):
     bot.send_message(
         message.chat.id,
         response,
-        parse_mode="markdown",
+        parse_mode="HTML",
         reply_markup=notif_status_menu(),
     )
 
@@ -347,8 +352,20 @@ def callback_handler(call):
             chat_id=chat_id,
             message_id=message_id,
             text=get_notif_status_text(),
-            parse_mode="markdown",
+            parse_mode="HTML",
             reply_markup=notif_status_menu(),
+        )
+    
+    elif call.data == "change_create_notif_status":
+        current_status = setting_query.show_create_notif()
+        new_status = not current_status
+        setting_query.change_create_notif(new_status)
+        bot.edit_message_text(
+            chat_id=chat_id,
+            message_id=message_id,
+            text=get_notif_status_text(),
+            parse_mode="HTML",
+            reply_markup=notif_status_menu()
         )
 
     elif call.data == "change_delete_notif_status":
@@ -359,7 +376,7 @@ def callback_handler(call):
             chat_id=chat_id,
             message_id=message_id,
             text=get_notif_status_text(),
-            parse_mode="markdown",
+            parse_mode="HTML",
             reply_markup=notif_status_menu(),
         )
 
@@ -780,7 +797,10 @@ def add_user_f(chat_id):
                 parse_mode="HTML",
                 reply_markup=admins_menu(),
             )
-
+        if setting_query.show_create_notif():
+            admin_data = admins_query.admin_data(chat_id)
+            admin_name = admin_data["user_name"]
+            notif_setting.create_notif(email, admin_name, days, gb)
         clear_user_data(chat_id)
     else:
         bot.send_message(
