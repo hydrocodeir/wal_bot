@@ -1,6 +1,6 @@
 from db.query import admins_query, price_query
 from keyboards.keyboards import admins_menu
-from messages.messages import *
+from messages.messages import messages_setting
 from config import bot, Admin_chat_id
 from telebot.types import (
     InlineKeyboardButton,
@@ -31,7 +31,7 @@ def receive_photo_step(message, id, chat_id):
             f"🔋 *ترافیک پلن درخواستی:* {traffic}\n"
             f"💵 *قیمت این پلن:* {price} T"
         )
-        bot.send_message(chat_id, WAITING_FOR_APPROVAL, reply_markup=admins_menu())
+        bot.send_message(chat_id, messages_setting.WAITING_FOR_APPROV_CARD_PAYMENT, reply_markup=admins_menu())
         markup = InlineKeyboardMarkup(row_width=2)
         button1 = InlineKeyboardButton(
             text="✅ تایید خرید", callback_data=f"approv_pay_{chat_id}"
@@ -76,7 +76,7 @@ def handle_payment_approval(call):
         price = data["price"]
         if call.data.startswith("approv_pay"):
             admins_query.add_traffic(user_name, traffic)
-            bot.send_message(chat_id, AFTER_CONFIRM)
+            bot.send_message(chat_id, messages_setting.CONFIRM_CARD_PAYMENT)
             caption = (
                 f"✅ *پرداخت تایید شد !*\n\n"
                 f"💳 *روش خرید:* کارت به کارت\n"

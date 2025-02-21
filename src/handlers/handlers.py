@@ -58,7 +58,7 @@ def start_message(message):
         if setting_query.show_start_notif() == True:
             notif_setting.start_notif(message)
         if admins_query.admin_data(chat_id):
-            bot.send_message(message.chat.id, messages_setting.START_NONE_SUDO)
+            bot.send_message(message.chat.id, messages_setting.START_NONE_SUDO, reply_markup=admins_menu())
         else:
             markup = InlineKeyboardMarkup(row_width=1)
             button1 = InlineKeyboardButton(
@@ -165,7 +165,7 @@ def plans_page(message):
 def show_plans_with_button(message):
     plans = price_query.show_plans()
     if not plans:
-        bot.send_message(message, "❕درحال حاضر هیچ پلن خریدی موجود نیستس")
+        bot.send_message(message, "درحال حاضر هیچ پلن خریدی موجود نیست❕")
         return
     else:
         response = "📋* لیست پلن های موجود (قیمت ها به تومان!)*"

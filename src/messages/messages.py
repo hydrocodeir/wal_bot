@@ -90,7 +90,7 @@ class _MessageSetings(BaseSettings):
     )
     CARD_PAYMENT_MESSAGE: str = (
         "⚠️توجه \n"
-        "لطفا تصویر فیش واریز رو بدون کپشن ارسال کنید:"
+        "لطفا تصویر فیش واریز رو بدون کپشن ارسال کنید\n"
     )
     WAITING_FOR_APPROV_CARD_PAYMENT: str = (
         "♻️ تصویر درحال پردازش است...\n"

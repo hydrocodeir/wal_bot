@@ -20,7 +20,7 @@ class notif_for_main_admin:
     def create_notif(self, email, admin_name, traffic, days):
         caption= (
             f'🟡<b>User creation notif</b>\n'            
-            f'<b>نماینده ({admin_name})یک کاربر ایجاد کرد !</b>\n\n'
+            f'<b>نماینده ({admin_name}) یک کاربر ایجاد کرد !</b>\n\n'
             f'👤<b>User:</b> {email} \n'
             f'🔋<b>Traffic:</b> {traffic} \n'
             f'⌛<b>Remaining days:</b> {days} \n'
