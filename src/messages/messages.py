@@ -11,7 +11,7 @@ class _MessageSetings(BaseSettings):
     START_ADMIN: str = (
         "درود 🙌🏻\n"
         "به داشبورد مدیریت وال بات خوش آمدید.\n\n"
-        "💻 devlop by: @primez_dev"
+        "💻 devlop by: @primez_dev\n"
         f"🐋 wall bot {__version__}"
     )
     START_NONE_SUDO: str = (

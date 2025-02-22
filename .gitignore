@@ -1,5 +1,6 @@
 .codegpt
 .env
+.venv
 __pycache__/
 data/
 *.png
