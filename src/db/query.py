@@ -3,54 +3,61 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 
 
 # creat database
-engine = create_engine('sqlite:///data/wal.db')
+engine = create_engine("sqlite:///data/wal.db")
 base = declarative_base()
 session = sessionmaker(bind=engine)()
 
-class admins(base):
-    __tablename__ = 'admins'
 
-    chat_id = Column('chat_id', Integer, unique=True)
-    user_name = Column('user_name', String, unique=True, primary_key=True)
-    password = Column('password', String, unique=True, primary_key=True)
-    traffic = Column('traffic', Integer)
-    inb_id = Column('inb_id', Integer)
+class admins(base):
+    __tablename__ = "admins"
+
+    chat_id = Column("chat_id", Integer, unique=True)
+    user_name = Column("user_name", String, unique=True, primary_key=True)
+    password = Column("password", String, unique=True, primary_key=True)
+    traffic = Column("traffic", Integer)
+    inb_id = Column("inb_id", Integer)
+
 
 class priceing(base):
-    __tablename__ = 'priceing'
+    __tablename__ = "priceing"
 
-    id = Column('id', Integer, primary_key=True, autoincrement=True)
-    traffic = Column('traffic', Integer)
-    price = Column('price', Integer)
+    id = Column("id", Integer, primary_key=True, autoincrement=True)
+    traffic = Column("traffic", Integer)
+    price = Column("price", Integer)
+
 
 class Card(base):
-    __tablename__ = 'card_number'
+    __tablename__ = "card_number"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     card_number = Column(String, nullable=False)
 
+
 class HelpMessage(base):
-    __tablename__ = 'help_message'
+    __tablename__ = "help_message"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     message = Column(String, nullable=False)
+
 
 class RegisteringMessage(base):
-    __tablename__ = 'registering_message'
+    __tablename__ = "registering_message"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     message = Column(String, nullable=False)
 
+
 class BotSettings(base):
-    __tablename__ = 'settings'
+    __tablename__ = "settings"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    start_notif = Column('start_notif', Boolean, default=True)
-    create_notif = Column('creat_notif', Boolean, default=True)
-    delete_notif = Column('delete_notif', Boolean, default=True)
+    start_notif = Column("start_notif", Boolean, default=True)
+    create_notif = Column("creat_notif", Boolean, default=True)
+    delete_notif = Column("delete_notif", Boolean, default=True)
 
-    
+
 base.metadata.create_all(engine)
+
 
 # default settings
 def initialize_settings():
@@ -58,9 +65,7 @@ def initialize_settings():
         settings = session.query(BotSettings).first()
         if not settings:
             difault_settings = BotSettings(
-                start_notif=True,
-                create_notif=True,
-                delete_notif=True
+                start_notif=True, create_notif=True, delete_notif=True
             )
             session.add(difault_settings)
             session.commit()
@@ -68,7 +73,10 @@ def initialize_settings():
             pass
     except:
         pass
+
+
 initialize_settings()
+
 
 # settings query
 class SettingsQuery:
@@ -83,7 +91,7 @@ class SettingsQuery:
                 return False
         except:
             return False
-        
+
     def show_start_notif(self):
         try:
             settings = session.query(BotSettings).first()
@@ -93,7 +101,7 @@ class SettingsQuery:
                 return False
         except:
             return False
-        
+
     def change_create_notif(self, new_setting):
         try:
             updata = session.query(BotSettings).first()
@@ -105,7 +113,7 @@ class SettingsQuery:
                 return False
         except:
             return False
-        
+
     def show_create_notif(self):
         try:
             settings = session.query(BotSettings).first()
@@ -116,7 +124,6 @@ class SettingsQuery:
         except:
             return False
 
-        
     def change_delete_notif(self, new_setting):
         try:
             update = session.query(BotSettings).first()
@@ -128,7 +135,7 @@ class SettingsQuery:
                 return False
         except:
             return False
-        
+
     def show_delete_notif(self):
         try:
             settings = session.query(BotSettings).first()
@@ -138,7 +145,8 @@ class SettingsQuery:
                 return False
         except:
             return False
-        
+
+
 setting_query = SettingsQuery()
 
 
@@ -156,28 +164,30 @@ class MessageQuery:
             return True
         except:
             return False
-        
+
     def show_message(self):
         try:
-            message = session.query(HelpMessage).filter(HelpMessage.id==1).first()
+            message = session.query(HelpMessage).filter(HelpMessage.id == 1).first()
             if not message:
-                return {
-                "message": '⚠️ متن راهنما خالی است'
-                }
-            message_data = {
-                "message": message.message
-            }
+                return {"message": "⚠️ متن راهنما خالی است"}
+            message_data = {"message": message.message}
             return message_data
         except:
             return False
-        
+
+
 help_message_query = MessageQuery()
+
 
 # register message query
 class RegisterQuery:
     def add_message(sel, new_message):
         try:
-            message = session.query(RegisteringMessage).filter(RegisteringMessage.id==1).first()
+            message = (
+                session.query(RegisteringMessage)
+                .filter(RegisteringMessage.id == 1)
+                .first()
+            )
             if message:
                 message.message = new_message
             else:
@@ -187,20 +197,21 @@ class RegisterQuery:
             return True
         except:
             return False
-        
+
     def show_message(self):
         try:
-            message = session.query(RegisteringMessage).filter(RegisteringMessage.id==1).first()
+            message = (
+                session.query(RegisteringMessage)
+                .filter(RegisteringMessage.id == 1)
+                .first()
+            )
             if not message:
-                return {
-                "message": '⚠️ متن قوانین ثبت نام خالی است'
-                }
-            message_data = {
-                "message": message.message
-            }
+                return {"message": "⚠️ متن قوانین ثبت نام خالی است"}
+            message_data = {"message": message.message}
             return message_data
         except:
             return False
+
 
 registering_message = RegisterQuery()
 
@@ -224,15 +235,12 @@ class CardQuery:
         try:
             card = session.query(Card).filter(Card.id == 1).first()
             if not card:
-                return {
-                'card_number': '123456789'
-            }
-            card_data = {
-                'card_number': card.card_number
-            }
+                return {"card_number": "123456789"}
+            card_data = {"card_number": card.card_number}
             return card_data
         except:
             return False
+
 
 card_number_query = CardQuery()
 
@@ -241,29 +249,30 @@ card_number_query = CardQuery()
 class PriceQuery:
     def add_plan(self, traffic, price):
         try:
-            new_plan = priceing(
-                traffic=traffic,
-                price=price
-            )
+            new_plan = priceing(traffic=traffic, price=price)
             session.add(new_plan)
             session.commit()
             return True
         except:
             return False
-    
+
     def delete_plan(self, id):
         try:
-            delete = session.query(priceing).filter(priceing.id==id).first()
+            delete = session.query(priceing).filter(priceing.id == id).first()
             session.delete(delete)
             session.commit()
             self.reorder_ids()
             return True
         except:
             return False
-        
+
     def edite_plan(self, id, traffic, price):
         try:
-            update = session.query(priceing).filter(priceing.id==id).update({'traffic':traffic, 'price':price})
+            update = (
+                session.query(priceing)
+                .filter(priceing.id == id)
+                .update({"traffic": traffic, "price": price})
+            )
             session.commit()
             if update:
                 return True
@@ -271,7 +280,7 @@ class PriceQuery:
                 return False
         except:
             return False
-    
+
     def reorder_ids(self):
         try:
             plans = session.query(priceing).order_by(priceing.id).all()
@@ -281,21 +290,21 @@ class PriceQuery:
             return True
         except:
             return False
-        
+
     def show_plans(self):
         try:
             plans = session.query(priceing).all()
             pricing_list = [
-                {"id": price.id, "traffic": price.traffic,"price":price.price}
+                {"id": price.id, "traffic": price.traffic, "price": price.price}
                 for price in plans
             ]
             return pricing_list
         except:
             False
-        
-    def get_plan(self,id):
+
+    def get_plan(self, id):
         try:
-            plan = session.query(priceing).filter(priceing.id==id).first()
+            plan = session.query(priceing).filter(priceing.id == id).first()
             if not plan:
                 return False
             data = {
@@ -305,6 +314,8 @@ class PriceQuery:
             return data
         except:
             return False
+
+
 price_query = PriceQuery()
 
 
@@ -313,28 +324,29 @@ class AdminsQuery:
     def add_admin(self, user_name, password, traffic, inb_id):
         try:
             new_admin = admins(
-                user_name=user_name,
-                password=password,
-                traffic=traffic,
-                inb_id=inb_id
+                user_name=user_name, password=password, traffic=traffic, inb_id=inb_id
             )
             session.add(new_admin)
             session.commit()
             return True
         except:
             return False
-        
+
     def change_inb(self, user_name, inb_id):
         try:
-            update = session.query(admins).filter(admins.user_name==user_name).update({'inb_id':inb_id})
+            update = (
+                session.query(admins)
+                .filter(admins.user_name == user_name)
+                .update({"inb_id": inb_id})
+            )
             session.commit()
             return True
         except:
             return False
-        
+
     def add_traffic(self, user_name, traffic):
         try:
-            admin = session.query(admins).filter(admins.user_name==user_name).first()
+            admin = session.query(admins).filter(admins.user_name == user_name).first()
             if admin:
                 admin.traffic += traffic
                 session.commit()
@@ -342,21 +354,26 @@ class AdminsQuery:
             return False
         except:
             return False
-        
+
     def delete_admin(self, user_name):
         try:
-            delete = session.query(admins).filter(admins.user_name==user_name).first()
+            delete = session.query(admins).filter(admins.user_name == user_name).first()
             session.delete(delete)
             session.commit()
             return True
         except:
             return False
-        
+
     def show_admins(self):
         try:
             select_admins = session.query(admins).all()
             admins_list = [
-                {"user_name": admin.user_name,"password":admin.password, "traffic": admin.traffic, "inb_id": admin.inb_id}
+                {
+                    "user_name": admin.user_name,
+                    "password": admin.password,
+                    "traffic": admin.traffic,
+                    "inb_id": admin.inb_id,
+                }
                 for admin in select_admins
             ]
             return admins_list
@@ -365,24 +382,36 @@ class AdminsQuery:
 
     def add_chat_id(self, user_name, password, chat_id):
         try:
-            check = check = session.query(admins).filter_by(user_name=user_name, password=password).all()
+            check = check = (
+                session.query(admins)
+                .filter_by(user_name=user_name, password=password)
+                .all()
+            )
             if check:
-                update = session.query(admins).filter(admins.user_name==user_name).update({'chat_id':chat_id})
+                update = (
+                    session.query(admins)
+                    .filter(admins.user_name == user_name)
+                    .update({"chat_id": chat_id})
+                )
                 session.commit()
                 return True
             else:
                 return False
         except:
             False
-    
+
     def remove_chat_id(self, chat_id):
         try:
-            update = session.query(admins).filter(admins.chat_id==chat_id).update({'chat_id':None})
+            update = (
+                session.query(admins)
+                .filter(admins.chat_id == chat_id)
+                .update({"chat_id": None})
+            )
             session.commit()
             return True
         except:
             return False
-        
+
     def admin_data(self, chat_id):
         try:
             admin = session.query(admins).filter(admins.chat_id == chat_id).first()
@@ -392,15 +421,15 @@ class AdminsQuery:
                 "user_name": admin.user_name,
                 "password": admin.password,
                 "traffic": admin.traffic,
-                "inb_id": admin.inb_id
+                "inb_id": admin.inb_id,
             }
             return data
         except:
             return False
-        
+
     def reduce_traffic(self, chat_id, delta):
         try:
-            admin_list = session.query(admins).filter(admins.chat_id==chat_id).all()
+            admin_list = session.query(admins).filter(admins.chat_id == chat_id).all()
             if not admin_list:
                 return False
             else:
@@ -409,17 +438,17 @@ class AdminsQuery:
                 new_traffic = traffic + delta
                 if new_traffic < 0:
                     new_traffic = 0
-                session.query(admins).filter(admins.chat_id==chat_id).update({'traffic': new_traffic})
+                session.query(admins).filter(admins.chat_id == chat_id).update(
+                    {"traffic": new_traffic}
+                )
                 session.commit()
                 return True
         except:
             return False
 
-
-        
     def admin_approval(self, chat_id):
         try:
-            approv = session.query(admins).filter(admins.chat_id==chat_id).all()
+            approv = session.query(admins).filter(admins.chat_id == chat_id).all()
             if approv:
                 return True
             else:
@@ -427,6 +456,5 @@ class AdminsQuery:
         except:
             return False
 
+
 admins_query = AdminsQuery()
-
-
