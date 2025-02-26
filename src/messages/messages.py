@@ -100,5 +100,10 @@ class _MessageSetings(BaseSettings):
         "✅ پرداخت شما تایید شد!\n"
         "(اطلاعات کامل در بخش مشخصات من)"
     )
+    DEBT_CONTRACT: str = (
+        "⚠️توجه \n\n"
+        "در روش پس پرداخت نماینده موظف به تسویه\n"
+        "صورت حساب خود حداکثر پس از گذشت هر 30 روز میباشد\n"
+    )
 
 messages_setting = _MessageSetings()

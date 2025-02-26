@@ -4,6 +4,9 @@ from handlers.handlers import (
     notif_page,
     return_to_main_menu,
     plans_page,
+    debt_page,
+    debt_contract,
+    show_plans,
     show_plans_with_button,
     save_new_help_message,
     save_new_register_message,
@@ -43,8 +46,10 @@ def message_handler(message):
         settings_page(message)
     if message.text == "🔙 بازگشت" and message.chat.id == Admin_chat_id:
         return_to_main_menu(message)
-    if message.text == "💵 پلن ها" and message.chat.id == Admin_chat_id:
+    if message.text == "💵 پلن پیش پرداخت" and message.chat.id == Admin_chat_id:
         plans_page(message)
+    if message.text == "💸 پلن پس پرداخت":
+        debt_page(message)
 
     if message.text == "📘 متن راهنما" and message.chat.id == Admin_chat_id:
         help_message = help_message_query.show_message()
@@ -138,6 +143,15 @@ def message_handler(message):
             )
             bot.register_next_step_handler(msg, delete_user_step1)
 
+    if message.text == "🛒 شارژ حساب 🛒":
+        if not admins_query.admin_approval(chat_id):
+            bot.send_message(
+                chat_id, "❌ شما وارد نشده‌اید. لطفاً وارد شوید.", reply_markup=markup
+            )
+            return
+        else:
+            show_plans(chat_id)
+
     if message.text == "💵 خرید ترافیک 💵":
         if not admins_query.admin_approval(chat_id):
             bot.send_message(
@@ -146,6 +160,25 @@ def message_handler(message):
             return
         else:
             show_plans_with_button(chat_id)
+
+    if message.text == "💳 پس پرداخت 💳":
+        if not admins_query.admin_approval(chat_id):
+            bot.send_message(
+                chat_id, "❌ شما وارد نشده‌اید. لطفاً وارد شوید.", reply_markup=markup
+            )
+            return
+        else:
+            debt_contract(message)
+
+    if message.text == "♻️ بازگشت ♻️":
+        if not admins_query.admin_approval(chat_id):
+            bot.send_message(
+                chat_id, "❌ شما وارد نشده‌اید. لطفاً وارد شوید.", reply_markup=markup
+            )
+            return
+        else:
+            bot.send_message(chat_id, "به منوی اصلی برگشتید!", reply_markup=admins_menu())
+            
 
     if message.text == "❌ خارج شدن ❌":
         if admins_query.remove_chat_id(chat_id):

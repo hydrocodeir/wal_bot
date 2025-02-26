@@ -14,8 +14,9 @@ class admins(base):
     chat_id = Column("chat_id", Integer, unique=True)
     user_name = Column("user_name", String, unique=True, primary_key=True)
     password = Column("password", String, unique=True, primary_key=True)
-    traffic = Column("traffic", Integer)
     inb_id = Column("inb_id", Integer)
+    debt = Column("debt", Integer, default=0)
+    traffic = Column("traffic", String)
 
 
 class priceing(base):
@@ -23,6 +24,12 @@ class priceing(base):
 
     id = Column("id", Integer, primary_key=True, autoincrement=True)
     traffic = Column("traffic", Integer)
+    price = Column("price", Integer)
+
+class TrafficPrice(base):
+    __tablename__ = "traffic_price"
+
+    id = Column("id", Integer, primary_key=True, autoincrement=True)
     price = Column("price", Integer)
 
 
@@ -54,6 +61,7 @@ class BotSettings(base):
     start_notif = Column("start_notif", Boolean, default=True)
     create_notif = Column("creat_notif", Boolean, default=True)
     delete_notif = Column("delete_notif", Boolean, default=True)
+    debt_system = Column("debt_system", Boolean, default=False)
 
 
 base.metadata.create_all(engine)
@@ -145,9 +153,57 @@ class SettingsQuery:
                 return False
         except:
             return False
-
+        
+    def change_debt_system(self, new_setting):
+        try:
+            update = session.query(BotSettings).first()
+            if update:
+                update.debt_system = new_setting
+                session.commit()
+                return True
+            else:
+                return False
+        except:
+            return False
+        
+    def show_debt_stasus(self):
+        try:
+            status = session.query(BotSettings).first()
+            if status:
+                return status.debt_system
+            else:
+                return False
+        except:
+            return False
 
 setting_query = SettingsQuery()
+
+# traffic price
+class TrafficPriceQuery:
+    def add_price(self, new_price):
+        try:
+            price = session.query(TrafficPrice).filter(TrafficPrice.id == 1).first()
+            if price:
+                price.price = new_price
+            else:
+                price = TrafficPrice(id=1, price=new_price)
+                session.add(price)
+            session.commit()
+            return True
+        except:
+            return False
+        
+    def show_price(self):
+        try:
+            price = session.query(TrafficPrice).filter(TrafficPrice.id == 1).first()
+            if not price:
+                return "⚠️ تنظیم نشده"
+            price_data = price.price
+            return price_data
+        except:
+            return False
+
+traffic_price_query = TrafficPriceQuery()
 
 
 # help message query
@@ -348,7 +404,20 @@ class AdminsQuery:
         try:
             admin = session.query(admins).filter(admins.user_name == user_name).first()
             if admin:
-                admin.traffic += traffic
+                if admin.traffic.lower() =="false":
+                    admin.traffic = traffic
+                else:    
+                    admin.traffic += traffic
+                session.commit()
+                return True
+            return False
+        except:
+            return False
+    def set_debt_system(self, chat_id, traffic):
+        try:
+            admin = session.query(admins).filter(admins.chat_id == chat_id).first()
+            if admin:
+                admin.traffic = traffic
                 session.commit()
                 return True
             return False
@@ -373,6 +442,7 @@ class AdminsQuery:
                     "password": admin.password,
                     "traffic": admin.traffic,
                     "inb_id": admin.inb_id,
+                    "debt": admin.debt
                 }
                 for admin in select_admins
             ]
@@ -422,27 +492,39 @@ class AdminsQuery:
                 "password": admin.password,
                 "traffic": admin.traffic,
                 "inb_id": admin.inb_id,
+                "debt": admin.debt
             }
             return data
         except:
             return False
+        
+    def clear_debt(self, chat_id):
+        try:
+            update = (
+                session.query(admins)
+                .filter(admins.chat_id == chat_id)
+                .update({"debt": 0})
+            )
+            session.commit()
+            return True
+        except:
+            return False
+
 
     def reduce_traffic(self, chat_id, delta):
         try:
-            admin_list = session.query(admins).filter(admins.chat_id == chat_id).all()
-            if not admin_list:
+            admin = session.query(admins).filter(admins.chat_id == chat_id).first()
+            if not admin:
                 return False
+            if admin.traffic.lower() == "false":
+                admin.debt += delta
             else:
-                admin = admin_list[0]
-                traffic = admin.traffic
-                new_traffic = traffic + delta
+                new_traffic = int(admin.traffic) - abs(delta)
                 if new_traffic < 0:
                     new_traffic = 0
-                session.query(admins).filter(admins.chat_id == chat_id).update(
-                    {"traffic": new_traffic}
-                )
-                session.commit()
-                return True
+                admin.traffic = str(new_traffic)
+            session.commit()
+            return True
         except:
             return False
 
