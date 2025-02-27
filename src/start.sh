@@ -3,5 +3,4 @@
 
 alembic upgrade head
 
-
-python3 bot.py
+exec python3 bot.py
