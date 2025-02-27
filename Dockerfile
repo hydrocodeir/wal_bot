@@ -9,4 +9,6 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 COPY . .
 
-CMD ["sh", "src/start.sh"]
+RUN chmod +x /app/src/start.sh
+
+CMD ["/app/src/start.sh"]
