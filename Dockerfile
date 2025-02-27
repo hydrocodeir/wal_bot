@@ -9,6 +9,4 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 COPY . .
 
-RUN chmod +x /app/src/start.sh
-
-CMD ["/app/src/start.sh"]
+CMD ["sh", "-c", "alembic upgrade head && python3 src/bot.py"]
