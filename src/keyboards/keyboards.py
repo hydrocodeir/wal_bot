@@ -21,7 +21,8 @@ def setting_menu():
         resize_keyboard=True, one_time_keyboard=False, row_width=2
     )
     reply_keyboard.add(
-        "💵 پلن ها",
+        "💵 پلن پیش پرداخت",
+        "💸 پلن پس پرداخت",
         "📘 متن راهنما",
         "🧾 متن ثبت نام",
         "🔔 نوتیف ها",
@@ -58,11 +59,28 @@ def admins_menu():
         "⌛ تمدید کاربر ⌛",
         "🎯 راهنما 🎯",
         "🗑️ حذف کاربر 🗑️",
-        "💵 خرید ترافیک 💵",
+        "🛒 شارژ حساب 🛒",
         "❌ خارج شدن ❌",
     )
     return reply_keyboard
 
+def buy_traffic():
+    reply_keyboard = ReplyKeyboardMarkup(
+        row_width=1, resize_keyboard=True, one_time_keyboard=False
+    )
+    reply_keyboard.add("💵 خرید ترافیک 💵","♻️ بازگشت ♻️")
+    return reply_keyboard
+
+def debt_and_buy_traffic():
+    reply_keyboard = ReplyKeyboardMarkup(
+        row_width=1, resize_keyboard=True, one_time_keyboard=False
+    )
+    reply_keyboard.add(
+        "💵 خرید ترافیک 💵",
+        "💳 پس پرداخت 💳",
+        "♻️ بازگشت ♻️"
+    )
+    return reply_keyboard
 
 # admins page
 def admins_controll():
@@ -84,13 +102,30 @@ def admins_controll():
 # plans page
 def plans_controll():
     markup = InlineKeyboardMarkup(row_width=2)
-    button1 = InlineKeyboardButton(text="📋 افزودن پلن 📋", callback_data="add_a_plan")
-    button2 = InlineKeyboardButton(text="⚙️ ویرایش پلن ⚙️", callback_data="change_plan")
-    button3 = InlineKeyboardButton(text="❌ حذف پلن ❌", callback_data="delete_plan")
+    button1 = InlineKeyboardButton(
+        text="📋 افزودن پلن 📋", callback_data="add_a_plan"
+    )
+    button2 = InlineKeyboardButton(
+        text="⚙️ ویرایش پلن ⚙️", callback_data="change_plan"
+    )
+    button3 = InlineKeyboardButton(
+        text="❌ حذف پلن ❌", callback_data="delete_plan"
+    )
     button4 = InlineKeyboardButton(
         text="💳 تنظیم شماره کارت 💳", callback_data="set_card"
     )
     markup.add(button1, button2, button3, button4)
+    return markup
+
+def debt_controll():
+    markup = InlineKeyboardMarkup(row_width=2)
+    button1 = InlineKeyboardButton(
+        text="🔄️ فعال/غیرفعال", callback_data="change_debt_status"
+    )
+    button2 = InlineKeyboardButton(
+        text="💸 قیمت", callback_data="change_debt_price"
+    )
+    markup.add(button1, button2)
     return markup
 
 
@@ -98,6 +133,14 @@ def payment_methods():
     markup = InlineKeyboardMarkup(row_width=1)
     button1 = InlineKeyboardButton(
         text="💳 کارت به کارت 💳", callback_data="card_payment"
+    )
+    markup.add(button1)
+    return markup
+
+def payment_methods_for_debt():
+    markup = InlineKeyboardMarkup(row_width=1)
+    button1 = InlineKeyboardButton(
+        text="💳 کارت به کارت 💳", callback_data="card_payment_for_debt"
     )
     markup.add(button1)
     return markup

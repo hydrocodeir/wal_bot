@@ -4,13 +4,18 @@ from keyboards.keyboards import (
     admins_menu,
     notif_status_menu,
     admins_controll,
+    payment_methods_for_debt,
     plans_controll,
+    buy_traffic,
+    debt_and_buy_traffic,
+    debt_controll,
     payment_methods,
 )
-from pay.card_method import receive_photo_step
+from pay.card_method import receive_photo_step, receive_photo_step_for_debt
 from db.query import (
     admins_query,
     price_query,
+    traffic_price_query,
     card_number_query,
     help_message_query,
     registering_message,
@@ -122,9 +127,9 @@ def get_notif_status_text():
     response = (
         f"🔔 <b>Notification Status</b>\n"
         f"<b>وضعیت نوتیفیکیشن‌ها:</b>\n\n"
-        f"<b>{start_notif_status} استارت ربات</b> \n"
-        f"<b>{create_notif_status} ساخت کاربر توسط نماینده</b> \n"
-        f"<b>{delete_notif_status} حذف کاربر توسط نمایندگان</b> \n"
+        f"<b>({start_notif_status}) استارت ربات</b> \n"
+        f"<b>({create_notif_status}) ساخت کاربر توسط نماینده</b> \n"
+        f"<b>({delete_notif_status}) حذف کاربر توسط نمایندگان</b> \n"
     )
     return response
 
@@ -161,11 +166,24 @@ def plans_page(message):
             message, response, parse_mode="markdown", reply_markup=plans_controll()
         )
 
+def show_plans(message):
+    chat_id = message
+    get_status = admins_query.admin_data(chat_id)  
+    user_status = get_status["traffic"]
+
+    if user_status.lower() == "false":
+        user_status = False
+    
+    if not setting_query.show_debt_stasus() or not user_status:
+        bot.send_message(chat_id, "⬇️ روش های فعال جهت شارژ حساب", reply_markup=buy_traffic())
+    else:
+        bot.send_message(chat_id, "⬇️ روش های فعال جهت شارژ حساب", reply_markup=debt_and_buy_traffic())
+
 
 def show_plans_with_button(message):
     plans = price_query.show_plans()
     if not plans:
-        bot.send_message(message, "درحال حاضر هیچ پلن خریدی موجود نیست❕")
+        bot.send_message(message, "هیچ پلنی جهت خرید موجود نیست❕")
         return
     else:
         response = "📋* لیست پلن های موجود (قیمت ها به تومان!)*"
@@ -178,6 +196,52 @@ def show_plans_with_button(message):
             )
             markup.add(button)
         bot.send_message(message, response, reply_markup=markup, parse_mode="Markdown")
+
+
+# debt page
+def debt_status_text():
+    status = setting_query.show_debt_stasus()
+
+    debt_status = "✅" if status else "❌"
+    response = (
+        f"<b>⚠️ پلن پس پرداخت به برمبنای استفاده هر 1 گیگ توسط نماینده هااست.</b>\n\n"
+        f"<b>وضعیت پلن پس پرداخت ({debt_status})</b>"
+    )
+    return response
+
+def debt_page(message):
+    response = debt_status_text()
+    bot.reply_to(
+        message,
+        response,
+        parse_mode="HTML",
+        reply_markup=debt_controll()
+    )
+    
+# debt contract
+def debt_contract(message):
+    chat_id = message.chat.id
+    get_username = admins_query.admin_data(chat_id)
+    user_name = get_username["user_name"]
+
+
+    callback_data_confirm = f"confirmcontract_{user_name}_{chat_id}"
+    callback_data_reject = f"rejectcontractt"
+    markup = InlineKeyboardMarkup(row_width=1)
+    button1 = InlineKeyboardButton(
+        text="✅ ثبت درخواست برای فعال شدن پس پرداخت",
+        callback_data=callback_data_confirm,
+    )
+    button2 = InlineKeyboardButton(
+        text="❌ رد کردن", callback_data=callback_data_reject
+    )
+    markup.add(button1, button2)
+    price = traffic_price_query.show_price()
+    bot.send_message(
+        chat_id=chat_id,
+        text=f"{messages_setting.DEBT_CONTRACT}\nقیمت تمام شده هرگیگ: {price} تومان",
+        reply_markup=markup)
+    
 
 
 # callback handler
@@ -337,6 +401,17 @@ def callback_handler(call):
         )
         bot.register_next_step_handler(call.message, receive_photo_step, id, chat_id)
 
+    elif call.data == "card_payment_for_debt":
+        get_card = card_number_query.show_card()
+        card = get_card["card_number"]
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+        bot.send_message(
+            chat_id=chat_id,
+            text=f"*{messages_setting.CARD_PAYMENT_MESSAGE}\n💳 شماره کارت:*\n```{card}```",
+            parse_mode="markdown",
+        )
+        bot.register_next_step_handler(call.message, receive_photo_step_for_debt, chat_id)
+
     elif call.data == "cancel":
         try:
             bot.delete_message(chat_id, message_id)
@@ -379,6 +454,94 @@ def callback_handler(call):
             parse_mode="HTML",
             reply_markup=notif_status_menu(),
         )
+
+    elif call.data == "change_debt_status":
+        current_status = setting_query.show_debt_stasus()
+        new_status = not current_status
+        setting_query.change_debt_system(new_status)
+        bot.edit_message_text(
+            chat_id=chat_id,
+            message_id=message_id,
+            text=debt_status_text(),
+            parse_mode="HTML",
+            reply_markup=debt_controll()
+        )
+    
+    elif call.data == "change_debt_price":
+        current_price = traffic_price_query.show_price()
+        text = (
+            f"<b>💸 قیمت فعلی برای هر 1 گیگ: {current_price}</b>\n\n"
+            f"قیمت جدید را به تومان وارد گنید:"
+        )
+        bot.send_message(chat_id=chat_id, text=text, parse_mode="HTML")
+        bot.register_next_step_handler(call.message, change_debt_price)
+
+    elif call.data.startswith("confirmcontract_"):
+        username = call.data.split("_")[1]
+        user_chat_id = call.data.split("_")[2]
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+        bot.send_message(
+            user_chat_id, "♻️ درخواست شما ارسال شد، لطفا منتظر باشید..."
+        )
+        caption = (
+            f"*💸در خواست فعال سازی پس پرداخت !*\n\n"
+            f"👤 *نماینده:* {username} \n"
+        )
+        markup = InlineKeyboardMarkup(row_width=2)
+        button1 = InlineKeyboardButton(
+            text="✅ تایید", callback_data=f"acceptcontract_{user_chat_id}"
+        )
+        button2 = InlineKeyboardButton(
+            text="❌ رد کردن", callback_data=f"rejectcontract_{user_chat_id}"
+        )
+        markup.add(button1, button2)
+
+        bot.send_message(
+            Admin_chat_id, caption, parse_mode="markdown", reply_markup=markup
+        )
+    
+    elif call.data.startswith("acceptcontract_"):
+        user_chat_id = call.data.split("_")[1]
+        if admins_query.set_debt_system(user_chat_id, "false"):
+            bot.delete_message(call.message.chat.id, call.message.message_id)
+            bot.send_message(
+                user_chat_id, "✅ درخواست شما برای متود پس پرداخت تایید شد، برای اطلاعات بیشتر و پرداخت صورت حساب به بخش مشخصات من مراجعه کنید."
+            )
+            bot.send_message(
+                Admin_chat_id, "✅ درخواست نماینده برای متود پس پرداخت تایید شد"
+            )
+            
+
+    elif call.data.startswith("rejectcontract_"):
+        user_chat_id = call.data.split("_")[1]
+        bot.send_message(
+            user_chat_id, "❌ درخواست شما برای متود پس پرداخت رد شد."
+        )
+        bot.send_message(
+            Admin_chat_id, "❌ درخواست نماینده برای متود پس پرداخت رد شد"
+        )
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+
+    elif call.data == "rejectcontractt":
+        bot.delete_message(call.message.chat.id, call.message.message_id)
+
+
+def change_debt_price(message):
+    try:
+        new_price = message.text
+        if traffic_price_query.add_price(new_price):
+            caption = (
+                f"✅ قیمت جدید ثبت شد\n"
+                f"قیمت هر گیگ: {new_price}"
+            )
+            bot.send_message(
+                message.chat.id,
+                caption,
+                reply_markup=setting_menu()
+            )
+    except:
+        pass
+
 
 
 # add plan
@@ -705,27 +868,38 @@ def add_user_step3(message):
     if message.text == "❌ بازگشت ❌":
         return bot.send_message(
             message.chat.id,
-            "✅ عملیات ویرایش راهنما لغو شد.",
+            "✅ عملیات لغو شد.",
             reply_markup=admins_menu(),
         )
-    else:
-        chat_id = message.chat.id
-        try:
-            gb = int(message.text)
-            if gb <= 0:
-                bot.send_message(
-                    chat_id, "❌ لطفاً مقدار ترافیک معتبر و مثبت وارد کنید."
-                )
-                bot.register_next_step_handler(message, add_user_step3)
+
+    chat_id = message.chat.id
+    try:
+        admin_data = admins_query.admin_data(chat_id)
+        admin_traffic = admin_data["traffic"]
+        gb = message.text.strip()
+
+        if not gb.isdigit() or int(gb) <= 0:
+            bot.send_message(chat_id, "❌ لطفاً مقدار ترافیک معتبر و مثبت وارد کنید.")
+            bot.register_next_step_handler(message, add_user_step3)
+            return
+
+        gb = int(gb)
+
+
+        if admin_traffic.lower() == "false":
+            admin_traffic = False
+        else:
+            try:
+                admin_traffic = int(admin_traffic)
+            except ValueError:
+                bot.send_message(chat_id, "❌ مقدار ترافیک نامعتبر است، لطفاً دوباره امتحان کنید.")
                 return
 
-            admin_data = admins_query.admin_data(chat_id)
-            admin_traffic = admin_data["traffic"]
 
-            if admin_traffic is None:
-                bot.send_message(chat_id, "❌ مشکلی در اطلاعات شما وجود دارد.")
-                return
+        if admin_traffic is False:
+            success = admins_query.reduce_traffic(chat_id, gb)
 
+        else:
             if gb > admin_traffic:
                 bot.send_message(
                     chat_id,
@@ -733,25 +907,28 @@ def add_user_step3(message):
                     reply_markup=admins_menu(),
                 )
                 return
+
             if admin_traffic < 100:
                 warning_text = (
                     "⚠️ *هشدار مهم*\n\n"
                     "🚨 *ترافیک باقی‌مانده شما کمتر از 100 گیگ است!*\n"
-                    "❗ لطفاً بررسی کنید."
                 )
-
                 bot.send_message(chat_id, warning_text, parse_mode="Markdown")
 
-            if admins_query.reduce_traffic(chat_id, -gb):
-                user_gb[chat_id] = gb
-                add_user_f(chat_id)
-            else:
-                bot.send_message(chat_id, "❌ مشکلی در به‌روزرسانی ترافیک پیش آمد.")
-        except ValueError:
-            bot.send_message(
-                chat_id, "❌ مقدار وارد شده صحیح نیست. لطفاً یک عدد معتبر وارد کنید."
-            )
-            bot.register_next_step_handler(message, add_user_step3)
+            success = admins_query.reduce_traffic(chat_id, gb)
+
+        if success:
+            user_gb[chat_id] = gb
+            add_user_f(chat_id)
+        else:
+            bot.send_message(chat_id, "❌ مشکلی در به‌روزرسانی ترافیک پیش آمد.")
+
+    except Exception as e:
+        bot.send_message(
+            chat_id, "❌ مقدار وارد شده صحیح نیست. لطفاً یک عدد معتبر وارد کنید."
+        )
+        bot.register_next_step_handler(message, add_user_step3)
+
 
 
 def generate_secure_random_text(length=16):
@@ -818,16 +995,31 @@ def clear_user_data(chat_id):
 
 # get info
 def get_admin_info(chat_id):
-    admin_data = admins_query.admin_data(chat_id)
-    admin_traffic = admin_data["traffic"]
-    username = admin_data["user_name"]
-    password = admin_data["password"]
-    if admin_traffic is None:
-        bot.send_message(chat_id, "❌ مشکلی در دریافت اطلاعات شما وجود دارد.")
-        return
-    else:
+    get_status = admins_query.admin_data(chat_id)  
+    user_status = get_status["traffic"]
+    username = get_status["user_name"]
+    password = get_status["password"]
+    
+    if user_status.lower() == "false":
+        get_admin_debt = admins_query.admin_data(chat_id)
+        admin_debt_traffic = get_admin_debt["debt"]
+        price = traffic_price_query.show_price()
+        debt = admin_debt_traffic * price
+
         caption = (
-            f"🔗* مشخصات شما:*\n\n"
+            f"🔗* مشخصات شما*\n\n"
+            f"👤* یوزرنیم:*  {username}\n"
+            f"🔐* پسورد:*  {password}\n"
+            f"💸* بدهی شما:*  {debt} تومان\n\n"
+        )
+        bot.send_message(
+            chat_id, caption, parse_mode="markdown", reply_markup=payment_methods_for_debt()
+        )
+
+    else:
+        admin_traffic = get_status["traffic"]
+        caption = (
+            f"🔗* مشخصات شما*\n\n"
             f"👤* یوزرنیم:*  {username}\n"
             f"🔐* پسورد:*  {password}\n"
             f"🔋* ترافیک باقی مانده:*  {admin_traffic} GB\n\n"

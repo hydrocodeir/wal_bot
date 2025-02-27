@@ -17,6 +17,6 @@ if __name__ == "__main__":
 
     except Exception as e:
         logger.error(f"Wall bot crashed: {e}")
-        time.sleep(5)
+        time.sleep(2)
     
 

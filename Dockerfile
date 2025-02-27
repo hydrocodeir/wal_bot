@@ -9,4 +9,4 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 COPY . .
 
-CMD ["python", "src/bot.py"]
+CMD ["sh", "src/start.sh"]

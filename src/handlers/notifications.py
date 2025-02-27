@@ -17,7 +17,7 @@ class notif_for_main_admin:
         )
         bot.send_message(Admin_chat_id, caption, parse_mode='HTML')
 
-    def create_notif(self, email, admin_name, traffic, days):
+    def create_notif(self, email, admin_name, days, traffic):
         caption= (
             f'🟡<b>User creation notif</b>\n'            
             f'<b>نماینده ({admin_name}) یک کاربر ایجاد کرد !</b>\n\n'
