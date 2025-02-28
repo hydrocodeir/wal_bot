@@ -9,4 +9,4 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 COPY . .
 
-CMD ["python3", "src/bot.py"]
+CMD ["sh", "-c", "alembic upgrade head && python3 src/bot.py"]

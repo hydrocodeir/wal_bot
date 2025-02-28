@@ -15,7 +15,7 @@ class admins(base):
     user_name = Column("user_name", String, unique=True, primary_key=True)
     password = Column("password", String, unique=True, primary_key=True)
     inb_id = Column("inb_id", Integer)
-    debt = Column("debt", Integer, default=0)
+    # debt = Column("debt", Integer, default=0)
     traffic = Column("traffic", String)
 
 
