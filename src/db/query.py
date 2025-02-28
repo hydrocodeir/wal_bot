@@ -413,11 +413,12 @@ class AdminsQuery:
             return False
         except:
             return False
-    def set_debt_system(self, chat_id, traffic):
+    def set_debt_system(self, chat_id, traffic, debt):
         try:
             admin = session.query(admins).filter(admins.chat_id == chat_id).first()
             if admin:
                 admin.traffic = traffic
+                admin.debt = debt
                 session.commit()
                 return True
             return False
