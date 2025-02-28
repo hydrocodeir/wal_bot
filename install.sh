@@ -27,6 +27,7 @@ update_wal_bot() {
     cd "$INSTALL_DIR"
     sudo docker compose pull
     echo -e "${GREEN}Running database migrations...${NC}"
+    sudo docker exec walbot-walbot-1 rm -rf alembic/versions/__pycache__
     sudo docker exec walbot-walbot-1 alembic upgrade head
     sudo docker compose up -d
     sudo docker compose restart
