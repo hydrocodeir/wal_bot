@@ -1,14 +1,18 @@
-"""add new columns to admins and settings table
+"""add check columns
 
-Revision ID: 8d1de7cb03de
+Revision ID: 2f32fbdf14a8
 Revises: 
-Create Date: 2025-02-24 12:24:43.250096
+Create Date: 2025-02-28 15:50:23.664928
 
 """
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy import inspect
 
+revision = '2f32fbdf14a8'
+down_revision = None
+branch_labels = None
+depends_on = None
 
 def upgrade() -> None:
     inspector = inspect(op.get_bind())
