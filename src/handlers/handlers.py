@@ -89,11 +89,19 @@ def admins_page(message):
     else:
         response = "🧑🏻‍💻* لیست نمایندگان:*\n\n"
         for admin in admins:
+            debt = admin['debt']
+            if debt is None:
+                debt = 0
+            traffic = admin['traffic']
+            if traffic == "false":
+                traffic = 0
+                
             response += (
                 f"```\n👤 یوزرنیم: {admin['user_name']}```\n"
                 f"🔐 پسورد: {admin['password']}\n"
-                f"📊 ترافیک باقی‌مانده: {admin['traffic']} GB\n"
                 f"🔢 اینباند درحال استفاده: {admin['inb_id']}\n"
+                f"📊 ترافیک باقی‌مانده: {traffic} GB\n"
+                f"💸 بدهی: {debt} تومان\n"
                 f"\n"
             )
         bot.reply_to(
@@ -175,7 +183,10 @@ def show_plans(message):
         user_status = False
     
     if not setting_query.show_debt_stasus() or not user_status:
-        bot.send_message(chat_id, "⬇️ روش های فعال جهت شارژ حساب", reply_markup=buy_traffic())
+        if get_status["debt"] > 0:
+            bot.send_message(chat_id, "⚠️ قبل از هر خریدی اول حساب خود را در بخش مشخصات من تسویه کنید")
+        else:
+            bot.send_message(chat_id, "⬇️ روش های فعال جهت شارژ حساب", reply_markup=buy_traffic())
     else:
         bot.send_message(chat_id, "⬇️ روش های فعال جهت شارژ حساب", reply_markup=debt_and_buy_traffic())
 
@@ -502,7 +513,7 @@ def callback_handler(call):
     
     elif call.data.startswith("acceptcontract_"):
         user_chat_id = call.data.split("_")[1]
-        if admins_query.set_debt_system(user_chat_id, "false"):
+        if admins_query.set_debt_system(user_chat_id, "false", 0):
             bot.delete_message(call.message.chat.id, call.message.message_id)
             bot.send_message(
                 user_chat_id, "✅ درخواست شما برای متود پس پرداخت تایید شد، برای اطلاعات بیشتر و پرداخت صورت حساب به بخش مشخصات من مراجعه کنید."
