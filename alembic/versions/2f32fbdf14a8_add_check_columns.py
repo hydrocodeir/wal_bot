@@ -17,6 +17,17 @@ depends_on = None
 def upgrade() -> None:
     inspector = inspect(op.get_bind())
 
+    tables = inspector.get_table_names()
+    if 'alembic_version' in tables:
+        op.execute('DROP TABLE alembic_version;')
+
+    op.create_table(
+        'alembic_version',
+        sa.Column('version_num', sa.String(32), nullable=False)
+    )
+    op.execute(f"INSERT INTO alembic_version (version_num) VALUES ('{revision}');")
+
+
     columns_admins = inspector.get_columns('admins')
     column_names_admins = [column['name'] for column in columns_admins]
 
