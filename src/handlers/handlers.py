@@ -1248,24 +1248,27 @@ def renew_user_step1(message):
         gb = obj.get("total", 0) / (1024**3)
         get_admin_traffic = admins_query.admin_data(chat_id)
         admin_traffic = get_admin_traffic["traffic"]
+        if admins_query != "false":
+            try:
+                if gb > admin_traffic:
+                    bot.send_message(
+                        chat_id,
+                        f"❌ ترافیک کافی برای ایجاد کاربر ندارید. (ترافیک شما: {admin_traffic} GB)",
+                        reply_markup=admins_menu(),
+                    )
+                    return
 
-        if gb > admin_traffic:
-            bot.send_message(
-                chat_id,
-                f"❌ ترافیک کافی برای ایجاد کاربر ندارید. (ترافیک شما: {admin_traffic} GB)",
-                reply_markup=admins_menu(),
-            )
-            return
+                if admin_traffic < 100:
+                    warning_text = (
+                        "⚠️ *هشدار مهم*\n\n"
+                        "🚨 *ترافیک باقی‌مانده شما کمتر از 100 گیگ است!*\n"
+                        "❗ لطفاً بررسی کنید."
+                    )
+                    bot.send_message(chat_id, warning_text, parse_mode="Markdown")
+            except:
+                pass
 
-        if admin_traffic < 100:
-            warning_text = (
-                "⚠️ *هشدار مهم*\n\n"
-                "🚨 *ترافیک باقی‌مانده شما کمتر از 100 گیگ است!*\n"
-                "❗ لطفاً بررسی کنید."
-            )
-            bot.send_message(chat_id, warning_text, parse_mode="Markdown")
-
-        if admins_query.reduce_traffic(chat_id, -gb):
+        if admins_query.reduce_traffic(chat_id, gb):
             get_admin_inb_id = admins_query.admin_data(chat_id)
             inb_id = get_admin_inb_id["inb_id"]
 
