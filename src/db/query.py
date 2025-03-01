@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, Boolean
+from sqlalchemy import create_engine, Column, Integer, String, Boolean, MetaData
 from sqlalchemy.orm import sessionmaker, declarative_base
 
 
@@ -6,6 +6,8 @@ from sqlalchemy.orm import sessionmaker, declarative_base
 engine = create_engine("sqlite:///data/wal.db")
 base = declarative_base()
 session = sessionmaker(bind=engine)()
+metadata = MetaData()
+metadata.reflect(bind=engine)
 
 
 class admins(base):
@@ -15,7 +17,7 @@ class admins(base):
     user_name = Column("user_name", String, unique=True, primary_key=True)
     password = Column("password", String, unique=True, primary_key=True)
     inb_id = Column("inb_id", Integer)
-    debt = Column("debt", Integer)
+    debt = Column("debt", Integer, nullable=False, default=0)
     traffic = Column("traffic", String)
 
 
