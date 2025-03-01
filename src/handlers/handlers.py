@@ -89,9 +89,10 @@ def admins_page(message):
     else:
         response = "🧑🏻‍💻* لیست نمایندگان:*\n\n"
         for admin in admins:
-            debt = admin['debt']
-            if debt is None:
-                debt = 0
+            admin_debt_traffic = admin["debt"]
+            price = traffic_price_query.show_price()
+            debt = admin_debt_traffic * price  
+                
             traffic = admin['traffic']
             if traffic == "false":
                 traffic = 0
