@@ -26,11 +26,7 @@ update_wal_bot() {
     echo -e "${YELLOW}Updating Wal Bot...${NC}"
     cd "$INSTALL_DIR"
     echo -e "${GREEN}Running database migrations...${NC}"
-    sudo docker exec walbot-walbot-1 rm -rf alembic/versions/8d1de7cb03de_add_new_columns_to_admins_table.py
-    sudo docker exec walbot-walbot-1 rm -rf alembic/versions/__pycache__
-    sudo docker exec walbot-walbot-1 rm -rf alembic/__pycache__
     sudo docker compose pull
-    sudo docker exec walbot-walbot-1 alembic upgrade head
     sudo docker compose up -d
     sudo docker compose restart
     echo -e "${GREEN}Wal Bot updated successfully!${NC}"
