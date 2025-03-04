@@ -19,6 +19,8 @@ class admins(base):
     inb_id = Column("inb_id", Integer)
     traffic = Column("traffic", String)
     debt = Column("debt", Integer, nullable=False, default=0)
+    debt_days = Column("debt_days", Integer, default=0)
+    status = Column("status", Boolean, default=False)
 
 
 class priceing(base):
