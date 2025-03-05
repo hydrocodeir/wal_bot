@@ -20,7 +20,7 @@ class admins(base):
     traffic = Column("traffic", String)
     debt = Column("debt", Integer, nullable=False, default=0)
     debt_days = Column("debt_days", Integer, default=0)
-    status = Column("status", Boolean, default=False)
+    status = Column("status", Boolean, default=True)
 
 
 class priceing(base):
@@ -411,7 +411,8 @@ class AdminsQuery:
                 if admin.traffic.lower() =="false":
                     admin.traffic = traffic
                 else:    
-                    admin.traffic += traffic
+                    new_traffic = int(admin.traffic) + traffic
+                    admin.traffic = str(new_traffic)
                 session.commit()
                 return True
             return False
@@ -532,7 +533,31 @@ class AdminsQuery:
             return True
         except:
             return False
-
+        
+    def reduse_traffic_by_username(self, user_name, delta):
+        try:
+            admin = session.query(admins).filter(admins.user_name == user_name).first()
+            if admin.traffic.lower() == "false":
+                return False
+            else:
+                new_traffic = int(admin.traffic) - delta
+                if new_traffic < 0:
+                    new_traffic = 0
+                admin.traffic = str(new_traffic)
+                session.commit()
+                return True
+        except:
+            return False
+        
+    def change_admin_status(self, user_name, new_status):
+        try:
+            admin = session.query(admins).filter(admins.user_name == user_name).first()
+            admin.status = new_status
+            session.commit()
+            return True
+        except:
+            return False
+        
     def admin_approval(self, chat_id):
         try:
             approv = session.query(admins).filter(admins.chat_id == chat_id).all()
@@ -542,6 +567,31 @@ class AdminsQuery:
                 return False
         except:
             return False
+        
+    def approv_for_modify(self, user_name):
+        try:
+            approve = session.query(admins).filter(admins.user_name == user_name).first()
+            if approve:
+                return True
+            else:
+                return False
+        except:
+            return False
 
-
+    def admin_data_for_modify(self, user_name):
+        try:
+            admin = session.query(admins).filter(admins.user_name == user_name).first()
+            data = {
+                "user_name": admin.user_name,
+                "password": admin.password,
+                "status": admin.status,
+                "traffic": admin.traffic,
+                "inb_id": admin.inb_id,
+                "debt": admin.debt,
+                "debt_days": admin.debt_days
+            }
+            return data
+        except:
+            return False
+        
 admins_query = AdminsQuery()

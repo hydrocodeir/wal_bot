@@ -83,24 +83,47 @@ def debt_and_buy_traffic():
     return reply_keyboard
 
 # admins page
-def admins_controll():
+def admins_control():
     markup = InlineKeyboardMarkup(row_width=1)
     button1 = InlineKeyboardButton(
-        text="👤 افزودن ادمین 👤", callback_data="add_an_admin"
+        text="⚙️ مدیریت نماینده", callback_data="modify_admin"
     )
     button2 = InlineKeyboardButton(
-        text="♻️ تغییر اینباند ادمین ♻️", callback_data="change_inb"
+        text="➕ افزودن نماینده", callback_data="add_an_admin"
+    )
+    # button2 = InlineKeyboardButton(
+    #     text="♻️ تغییر اینباند ادمین ♻️", callback_data="change_inb"
+    # )
+    # button3 = InlineKeyboardButton(
+    #     text="🔋 افزودن ترافیک به ادمین 🔋", callback_data="add_traffic"
+    # )
+    # button4 = InlineKeyboardButton(text="❌ حذف ادمین ❌", callback_data="delete_admin")
+    markup.add(button1, button2)
+    return markup
+
+def admin_modify_control(user_name):
+    markup = InlineKeyboardMarkup(row_width=2)
+    button1 = InlineKeyboardButton(
+        text="🔋 افزودن ترافیک", callback_data=f"add_traffic_{user_name}"
+    )
+    button2 = InlineKeyboardButton(
+        text="🪫 کاهش ترافیک", callback_data=f"reduse_traffic_{user_name}"
     )
     button3 = InlineKeyboardButton(
-        text="🔋 افزودن ترافیک به ادمین 🔋", callback_data="add_traffic"
+        text="🆔 تغییر اینباند", callback_data=f"change_inb_{user_name}"
     )
-    button4 = InlineKeyboardButton(text="❌ حذف ادمین ❌", callback_data="delete_admin")
-    markup.add(button1, button2, button3, button4)
+    button4 = InlineKeyboardButton(
+        text="♻️ فعال/غیرفعال", callback_data=f"status_for_{user_name}"
+    )
+    button5 = InlineKeyboardButton(
+        text="❌ حذف", callback_data=f"delete_admin_{user_name}"
+    )
+    markup.add(button1, button2, button3, button4, button5)
     return markup
 
 
 # plans page
-def plans_controll():
+def plans_control():
     markup = InlineKeyboardMarkup(row_width=2)
     button1 = InlineKeyboardButton(
         text="📋 افزودن پلن 📋", callback_data="add_a_plan"
@@ -117,7 +140,7 @@ def plans_controll():
     markup.add(button1, button2, button3, button4)
     return markup
 
-def debt_controll():
+def debt_control():
     markup = InlineKeyboardMarkup(row_width=2)
     button1 = InlineKeyboardButton(
         text="🔄️ فعال/غیرفعال", callback_data="change_debt_status"

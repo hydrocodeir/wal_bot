@@ -3,13 +3,15 @@ from keyboards.keyboards import (
     setting_menu,
     admins_menu,
     notif_status_menu,
-    admins_controll,
+    admins_control,
     payment_methods_for_debt,
-    plans_controll,
+    plans_control,
     buy_traffic,
     debt_and_buy_traffic,
-    debt_controll,
+    debt_control,
     payment_methods,
+    admin_modify_control
+
 )
 from pay.card_method import receive_photo_step, receive_photo_step_for_debt
 from db.query import (
@@ -83,7 +85,7 @@ def admins_page(message):
     admins = admins_query.show_admins()
     if not admins:
         bot.reply_to(
-            message, "❌ هیچ ادمینی ثبت نشده است.", reply_markup=admins_controll()
+            message, "❌ هیچ ادمینی ثبت نشده است.", reply_markup=admins_control()
         )
         return
     else:
@@ -106,7 +108,7 @@ def admins_page(message):
                 f"\n"
             )
         bot.reply_to(
-            message, response, parse_mode="markdown", reply_markup=admins_controll()
+            message, response, parse_mode="markdown", reply_markup=admins_control()
         )
 
 
@@ -159,7 +161,7 @@ def plans_page(message):
     plans = price_query.show_plans()
     if not plans:
         bot.reply_to(
-            message, "❌هیچ پلنی ساخته نشده است", reply_markup=plans_controll()
+            message, "❌هیچ پلنی ساخته نشده است", reply_markup=plans_control()
         )
         return
     else:
@@ -172,7 +174,7 @@ def plans_page(message):
                 f"\n"
             )
         bot.reply_to(
-            message, response, parse_mode="markdown", reply_markup=plans_controll()
+            message, response, parse_mode="markdown", reply_markup=plans_control()
         )
 
 def show_plans(message):
@@ -227,7 +229,7 @@ def debt_page(message):
         message,
         response,
         parse_mode="HTML",
-        reply_markup=debt_controll()
+        reply_markup=debt_control()
     )
     
 # debt contract
@@ -259,51 +261,93 @@ def debt_contract(message):
 # callback handler
 @bot.callback_query_handler(func=lambda call: True)
 def callback_handler(call):
+    markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
+    markup.add(KeyboardButton("❌ بازگشت ❌"))
+
     chat_id = call.message.chat.id
     message_id = call.message.message_id
+
     if call.data == "add_an_admin":
         bot.edit_message_text(text=messages_setting.ADD_ADMIN_STEP1, chat_id=chat_id, message_id=message_id)
         bot.register_next_step_handler(call.message, add_admin_step1)
 
-    elif call.data == "change_inb":
+    elif call.data == "modify_admin":
         bot.edit_message_text(
-            text=messages_setting.CHANGE_INB, chat_id=chat_id, message_id=message_id
-        )
-        bot.register_next_step_handler(call.message, edit_inb_step1)
-
-    elif call.data == "add_traffic":
-        bot.edit_message_text(
-            text="یوزرنیم ادمین مورد نظر رو جهت افزایش ترافیک وارد کنید:",
+            text="یوزرنیم ادمین موردنظر رو وارد کنید:",
             chat_id=chat_id,
-            message_id=message_id,
+            message_id=message_id
         )
-        bot.register_next_step_handler(call.message, add_traffic_step1)
+        bot.register_next_step_handler(call.message, modify_admin)
 
-    elif call.data == "delete_admin":
-        bot.edit_message_text(
-            text="یوزر نیم ادمین مورد نظر رو جهت حذف کردن واردکنید:",
+    elif call.data.startswith("change_inb_"):
+        user_name = call.data.split("_")[2]
+        bot.send_message(
             chat_id=chat_id,
-            message_id=message_id,
+            text=messages_setting.CHANGE_INB,
+            reply_markup=markup
         )
-        bot.register_next_step_handler(call.message, delete_admin)
+        bot.register_next_step_handler(
+            call.message, lambda msg: edit_inb_step1(msg, user_name))
+
+    elif call.data.startswith("add_traffic_"):
+        user_name = call.data.split("_")[2]
+        bot.send_message(
+            chat_id=chat_id,
+            text="ترافیک مورد نظر رو به گیگابایت وارد کنید:",
+            reply_markup=markup
+        )
+        bot.register_next_step_handler(
+            call.message, lambda msg: add_traffic_step1(msg, user_name)
+        )
+
+    elif call.data.startswith("delete_admin_"):
+        user_name = call.data.split("_")[2]
+        bot.send_message(
+            chat_id=chat_id,
+            text="جهت حذف این نماینده کلمه [تایید] رو بفرستید:",
+            reply_markup=markup
+        )
+        bot.register_next_step_handler(
+            call.message, lambda msg: delete_admin(msg, user_name)
+            )
+        
+    elif call.data.startswith("reduse_traffic_"):
+        user_name = call.data.split("_")[2]
+        bot.send_message(
+            chat_id=chat_id,
+            text="مقدار ترافیک جهت کاهش را به گیگابایت وارد کنید:",
+            reply_markup=markup
+        )
+        bot.register_next_step_handler(
+            call.message, lambda msg: reduse_traffic_by_admin(msg, user_name)
+        )
+
+    elif call.data.startswith("status_for_"):
+        user_name = call.data.split("_")[2]
+        admin = admins_query.admin_data_for_modify(user_name)
+        current_status = admin["status"]
+        new_status = not current_status
+        if admins_query.change_admin_status(user_name, new_status):
+            text = text_modify_admin(user_name)
+            bot.edit_message_text(
+                chat_id=chat_id,
+                message_id=message_id,
+                text=text,
+                parse_mode="HTML",
+                reply_markup=admin_modify_control(user_name)
+            )
 
     elif call.data == "add_a_plan":
-        markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-        markup.add(KeyboardButton("❌ بازگشت ❌"))
         bot.delete_message(chat_id=chat_id, message_id=message_id)
         bot.send_message(chat_id=chat_id, text=messages_setting.ADD_PLAN_STEP1, reply_markup=markup)
         bot.register_next_step_handler(call.message, add_plan_step1)
 
     elif call.data == "change_plan":
-        markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-        markup.add(KeyboardButton("❌ بازگشت ❌"))
         bot.delete_message(chat_id=chat_id, message_id=message_id)
         bot.send_message(chat_id=chat_id, text=messages_setting.CHANGE_PLAN_STEP1, reply_markup=markup)
         bot.register_next_step_handler(call.message, change_plan_step1)
 
     elif call.data == "delete_plan":
-        markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-        markup.add(KeyboardButton("❌ بازگشت ❌"))
         bot.delete_message(chat_id=chat_id, message_id=message_id)
         bot.send_message(chat_id=chat_id, text=messages_setting.DELETE_PLAN, reply_markup=markup)
         bot.register_next_step_handler(call.message, delete_plan)
@@ -311,8 +355,6 @@ def callback_handler(call):
     elif call.data == "set_card":
         card = card_number_query.show_card()
         card = card["card_number"]
-        markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
-        markup.add(KeyboardButton("❌ بازگشت ❌"))
         msg = bot.send_message(
             chat_id,
             f"*💳 شماره حساب فعلی:\n{card}*\n\n ♻️لطفا شماره حساب جدید خود را وارد کنید:",
@@ -476,7 +518,7 @@ def callback_handler(call):
             message_id=message_id,
             text=debt_status_text(),
             parse_mode="HTML",
-            reply_markup=debt_controll()
+            reply_markup=debt_control()
         )
     
     elif call.data == "change_debt_price":
@@ -671,6 +713,50 @@ def delete_plan(message):
     except ValueError:
         bot.send_message(message.chat.id, "❌ Please send a valid world.")
 
+# modify admin 
+def text_modify_admin(user_name):
+    admin = admins_query.admin_data_for_modify(user_name)
+    admin_debt_traffic = admin["debt"]
+    price = traffic_price_query.show_price()
+    debt = admin_debt_traffic * price  
+        
+    traffic = admin['traffic']
+    if traffic == "false":
+        traffic = 0
+
+    status = admin['status']
+    if status:
+        status = "فعال"
+    else:
+        status = "غیر فعال"
+
+    text = (
+        f"<b>✓ مشخصات نماینده</b>\n\n"
+        f"<b>👤 یوزرنیم:</b> {admin['user_name']}\n"
+        f"<b>🔐 پسورد:</b> {admin['password']}\n"
+        f"<b>🛜 وضعیت:</b> {status}\n"
+        f"<b>🔢 اینباند درحال استفاده:</b> {admin['inb_id']}\n"
+        f"<b>📊 ترافیک باقی‌مانده:</b> {traffic} GB\n"
+        f"<b>💸 بدهی:</b> {debt} تومان\n"
+        f"<b>📅 مهلت پرداخت بدهی:</b> {admin['debt_days']} روز\n"
+    )
+    return text
+    
+def modify_admin(message):
+    user_name = message.text
+    if admins_query.approv_for_modify(user_name):
+        text = text_modify_admin(user_name)
+        bot.send_message(
+            message.chat.id,
+            text=text,
+            parse_mode="HTML",
+            reply_markup=admin_modify_control(user_name)
+        )
+    else:
+        bot.send_message(
+            message.chat.id,
+            text="❌ یوزرنیم وارد شده در دیتابیس وجود ندارد"
+        )
 
 # add admin func
 def add_admin_step1(message):
@@ -726,75 +812,112 @@ def add_admin_step4(message, user_name, password, trafiic):
 
 
 # add traffic
-def add_traffic_step1(message):
-    if message.content_type == "text":
-        try:
-            user_name = message.text
-            bot.send_message(
-                message.chat.id, "حالا ترافیک مد نظر رو به گیگابایت وارد کنید:"
-            )
-            bot.register_next_step_handler(
-                message, lambda msg: add_traffic_step2(msg, user_name)
-            )
-        except ValueError:
-            bot.send_message(message.chat.id, "Please enter a valid world.")
-
-
-def add_traffic_step2(message, user_name):
-    if message.content_type == "text":
+def add_traffic_step1(message, user_name):
+    if message.text == "❌ بازگشت ❌":
+        return bot.send_message(
+            message.chat.id,
+            "✅ عملیات ویرایش راهنما لغو شد.",
+            reply_markup=main_admin_menu(),
+        )
+    else:
         try:
             traffic = int(message.text)
-            if admins_query.add_traffic(user_name, traffic):
-                bot.send_message(message.chat.id, "✅ ترافیک با موفقیت اضافه شد")
-            else:
-                bot.send_message(message.chat.id, "❌ کاربری با این نام پیدا نشد ")
         except ValueError:
-            bot.send_message(message.chat.id, "❌ Please send a valid number.")
+            bot.send_message(
+                message.chat.id,
+                "❌ لطفاً یک عدد معتبر وارد کنید.",
+            )
+            return bot.register_next_step_handler(message, lambda msg: add_traffic_step1(msg, user_name))
+            
 
+        if admins_query.add_traffic(user_name, traffic):
+            bot.send_message(
+                message.chat.id,
+                "✅ ترافیک با موفقیت اضافه شد",
+                reply_markup=main_admin_menu()
+            )
+        else:
+            bot.send_message(
+                message.chat.id,
+                "❌ نماینده با این نام پیدا نشد ",
+                reply_markup=main_admin_menu()
+            )
+
+# reduse traffic
+def reduse_traffic_by_admin(message, user_name):
+    if message.text == "❌ بازگشت ❌":
+        return bot.send_message(
+            message.chat.id,
+            "✅ عملیات ویرایش راهنما لغو شد.",
+            reply_markup=main_admin_menu(),
+        )
+    else:
+        try:
+            r_traffic = int(message.text)
+        except ValueError:
+            bot.send_message(
+                message.chat.id,
+                "❌ لطفاً یک عدد معتبر وارد کنید.",
+            )
+            return bot.register_next_step_handler(message, lambda msg: reduse_traffic_by_admin(msg, user_name))
+        if admins_query.reduse_traffic_by_username(user_name, r_traffic):
+            bot.send_message(
+                message.chat.id,
+                "✅ترافیک مورد نظر باموفقیت کاهش یافت",
+                reply_markup=main_admin_menu()
+            )
+        else:
+            bot.send_message(
+                message.chat.id,
+                "❌خطا:\nنماینده مورد نظر در پلن پس پرداخت فعال است و ترافیکی ندارد",
+                reply_markup=main_admin_menu()
+            )
 
 # edit inb id
-def edit_inb_step1(message):
-    if message.content_type == "text":
-        try:
-            user_name = message.text
-            bot.send_message(
-                message.chat.id, "حالا اینباند ادمین مورد نظر را وارد کنید:"
-            )
-            bot.register_next_step_handler(
-                message, lambda msg: edit_inb_step2(msg, user_name)
-            )
-        except ValueError:
-            bot.send_message(message.chat.id, "Please enter a valid world.")
-
-
-def edit_inb_step2(message, user_name):
-    if message.content_type == "text":
+def edit_inb_step1(message, user_name):
+    if message.text == "❌ بازگشت ❌":
+        return bot.send_message(
+            message.chat.id,
+            "✅ عملیات ویرایش راهنما لغو شد.",
+            reply_markup=main_admin_menu(),
+        )
+    else:
         try:
             new_inb = int(message.text)
-            if admins_query.change_inb(user_name, new_inb):
-                bot.send_message(message.chat.id, "✅ اینباد ادمین موردنظر تغییر یافت")
-            else:
-                bot.send_message(message.chat.id, "❌ کاربری با این نام پیدا نشد ")
         except ValueError:
-            bot.send_message(message.chat.id, "Please enter a valid numeric ID.")
+            bot.send_message(
+                message.chat.id,
+                "❌ لطفاً یک عدد معتبر وارد کنید.",
+            )
+            return bot.register_next_step_handler(message, lambda msg: edit_inb_step1(msg, user_name))
+
+        if admins_query.change_inb(user_name, new_inb):
+            bot.send_message(
+                message.chat.id,
+                f"✅ اینباند ( {user_name} ) به {new_inb} تغییر یافت",
+                reply_markup=main_admin_menu()
+            )
+
 
 
 # del admins
-def delete_admin(message):
-    if message.content_type == "text":
-        try:
-            user_name = message.text
-            if admins_query.delete_admin(user_name):
-                bot.send_message(
-                    message.chat.id,
-                    f"*✅ ادمین با یوزرنیم: {user_name}، حذف شد *",
-                    parse_mode="markdown",
-                    reply_markup=main_admin_menu(),
-                )
-            else:
-                bot.send_message(message.chat.id, "❌ کاربری با این نام پیدا نشد ")
-        except Exception as e:
-            bot.send_message(message.chat.id, f"An error occurred: {e}")
+def delete_admin(message, user_name):
+    if message.text == "❌ بازگشت ❌":
+        return bot.send_message(
+            message.chat.id,
+            "✅ عملیات ویرایش راهنما لغو شد.",
+            reply_markup=main_admin_menu(),
+        )
+    if message.text == "تایید":
+        admins_query.delete_admin(user_name)
+        bot.send_message(
+            message.chat.id,
+            f"✅ ادمین با یوزرنیم: [{user_name}] حذف شد ",
+            reply_markup=main_admin_menu()
+        )
+    
+    
+
 
 
 # login
