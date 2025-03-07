@@ -89,7 +89,7 @@ def admins_page(message):
         )
         return
     else:
-        response = "🧑🏻‍💻* لیست نمایندگان:*\n\n"
+        response = "🧑🏻‍💻<b> لیست نمایندگان:</b>\n\n"
         for admin in admins:
             admin_debt_traffic = admin["debt"]
             price = traffic_price_query.show_price()
@@ -100,7 +100,7 @@ def admins_page(message):
                 traffic = 0
                 
             response += (
-                f"```\n👤 یوزرنیم: {admin['user_name']}```\n"
+                f"<pre>👤 یوزرنیم: {admin['user_name']}</pre>\n"
                 f"🔐 پسورد: {admin['password']}\n"
                 f"🔢 اینباند درحال استفاده: {admin['inb_id']}\n"
                 f"📊 ترافیک باقی‌مانده: {traffic} GB\n"
@@ -108,7 +108,7 @@ def admins_page(message):
                 f"\n"
             )
         bot.reply_to(
-            message, response, parse_mode="markdown", reply_markup=admins_control()
+            message, response, parse_mode="HTML", reply_markup=admins_control()
         )
 
 
@@ -251,9 +251,10 @@ def debt_contract(message):
     )
     markup.add(button1, button2)
     price = traffic_price_query.show_price()
+    dead_line = traffic_price_query.show_dead_line()
     bot.send_message(
         chat_id=chat_id,
-        text=f"{messages_setting.DEBT_CONTRACT}\nقیمت تمام شده هرگیگ: {price} تومان",
+        text=f"{messages_setting.DEBT_CONTRACT}\n💵قیمت تمام شده هرگیگ: {price} تومان\n📅مهلت پرداخت صورتحساب: {dead_line} روز\n",
         reply_markup=markup)
     
 
@@ -530,6 +531,15 @@ def callback_handler(call):
         bot.send_message(chat_id=chat_id, text=text, parse_mode="HTML")
         bot.register_next_step_handler(call.message, change_debt_price)
 
+    elif call.data == "dead_line":
+        current_dead_line = traffic_price_query.show_dead_line()
+        text = (
+            f"<b>⌛ مهلت پرداخت صورتحساب فعلی: {current_dead_line} روز</b>\n\n"
+            f"مهلت پرداخت جدید را به عدد وارد کنید:"
+        )
+        bot.send_message(chat_id=chat_id, text=text, parse_mode="HTML")
+        bot.register_next_step_handler(call.message, change_dead_line)
+
     elif call.data.startswith("confirmcontract_"):
         username = call.data.split("_")[1]
         user_chat_id = call.data.split("_")[2]
@@ -556,7 +566,8 @@ def callback_handler(call):
     
     elif call.data.startswith("acceptcontract_"):
         user_chat_id = call.data.split("_")[1]
-        if admins_query.set_debt_system(user_chat_id, "false", 0):
+        dead_line = traffic_price_query.show_dead_line()
+        if admins_query.set_debt_system(user_chat_id, "false", 0, dead_line):
             bot.delete_message(call.message.chat.id, call.message.message_id)
             bot.send_message(
                 user_chat_id, "✅ درخواست شما برای متود پس پرداخت تایید شد، برای اطلاعات بیشتر و پرداخت صورت حساب به بخش مشخصات من مراجعه کنید."
@@ -596,6 +607,20 @@ def change_debt_price(message):
     except:
         pass
 
+def change_dead_line(message):
+    try:
+        new_dead_line = int(message.text)
+        if traffic_price_query.add_dead_line(new_dead_line):
+            caption = (
+                f"⌛ مهلت پرداخت جدید ثبت شد"
+            )
+            bot.send_message(
+                message.chat.id,
+                caption,
+                reply_markup=setting_menu()
+            )
+    except:
+        pass
 
 
 # add plan
@@ -1138,6 +1163,7 @@ def get_admin_info(chat_id):
     if user_status.lower() == "false":
         get_admin_debt = admins_query.admin_data(chat_id)
         admin_debt_traffic = get_admin_debt["debt"]
+        admin_dead_line = get_admin_debt["debt_days"]
         price = traffic_price_query.show_price()
         debt = admin_debt_traffic * price
 
@@ -1145,7 +1171,9 @@ def get_admin_info(chat_id):
             f"🔗* مشخصات شما*\n\n"
             f"👤* یوزرنیم:*  {username}\n"
             f"🔐* پسورد:*  {password}\n"
-            f"💸* بدهی شما:*  {debt} تومان\n\n"
+            f"💸* بدهی شما:*  {debt} تومان\n"
+            f"📅* مهلت پرداخت صورتحساب:*  {admin_dead_line} روز\n"
+
         )
         bot.send_message(
             chat_id, caption, parse_mode="markdown", reply_markup=payment_methods_for_debt()

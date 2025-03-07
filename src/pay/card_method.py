@@ -162,7 +162,8 @@ def handle_debt_payment_approval(call):
         debt = data["debt"]
 
         if call.data.startswith("_approv_pay_debt"):
-            admins_query.clear_debt(chat_id)
+            new_dead_line = traffic_price_query.show_dead_line()
+            admins_query.clear_debt(chat_id, new_dead_line)
             bot.send_message(chat_id, messages_setting.CONFIRM_CARD_PAYMENT)
 
             caption = (

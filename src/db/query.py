@@ -1,75 +1,5 @@
-from sqlalchemy import create_engine, Column, Integer, String, Boolean, MetaData
-from sqlalchemy.orm import sessionmaker, declarative_base
-
-
-# creat database
-engine = create_engine("sqlite:///data/wal.db")
-base = declarative_base()
-session = sessionmaker(bind=engine)()
-metadata = MetaData()
-metadata.reflect(bind=engine)
-
-
-class admins(base):
-    __tablename__ = "admins"
-
-    chat_id = Column("chat_id", Integer, unique=True)
-    user_name = Column("user_name", String, unique=True, primary_key=True)
-    password = Column("password", String, unique=True, primary_key=True)
-    inb_id = Column("inb_id", Integer)
-    traffic = Column("traffic", String)
-    debt = Column("debt", Integer, nullable=False, default=0)
-    debt_days = Column("debt_days", Integer, default=0)
-    status = Column("status", Boolean, default=True)
-
-
-class priceing(base):
-    __tablename__ = "priceing"
-
-    id = Column("id", Integer, primary_key=True, autoincrement=True)
-    traffic = Column("traffic", Integer)
-    price = Column("price", Integer)
-
-class TrafficPrice(base):
-    __tablename__ = "traffic_price"
-
-    id = Column("id", Integer, primary_key=True, autoincrement=True)
-    price = Column("price", Integer)
-
-
-class Card(base):
-    __tablename__ = "card_number"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    card_number = Column(String, nullable=False)
-
-
-class HelpMessage(base):
-    __tablename__ = "help_message"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    message = Column(String, nullable=False)
-
-
-class RegisteringMessage(base):
-    __tablename__ = "registering_message"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    message = Column(String, nullable=False)
-
-
-class BotSettings(base):
-    __tablename__ = "settings"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    start_notif = Column("start_notif", Boolean, default=True)
-    create_notif = Column("creat_notif", Boolean, default=True)
-    delete_notif = Column("delete_notif", Boolean, default=True)
-    debt_system = Column("debt_system", Boolean, default=False)
-
-
-base.metadata.create_all(engine)
-
+from db.model import session, BotSettings, TrafficPrice, admins, priceing, HelpMessage, RegisteringMessage, Card
+import threading
 
 # default settings
 def initialize_settings():
@@ -204,6 +134,27 @@ class TrafficPriceQuery:
                 return "⚠️ تنظیم نشده"
             price_data = price.price
             return price_data
+        except:
+            return False
+        
+    def add_dead_line(self, new_dead_line):
+        try:
+            dead_line = session.query(TrafficPrice).filter(TrafficPrice.id == 1).first()
+            if dead_line:
+                dead_line.dead_line = new_dead_line
+            else:
+                dead_line = TrafficPrice(id=1, dead_line=new_dead_line)
+                session.add(dead_line)
+            session.commit()
+            return True
+        except:
+            return False
+        
+    def show_dead_line(self):
+        try:
+            dead_line = session.query(TrafficPrice).filter(TrafficPrice.id == 1).first()
+            data = dead_line.dead_line
+            return data
         except:
             return False
 
@@ -418,12 +369,13 @@ class AdminsQuery:
             return False
         except:
             return False
-    def set_debt_system(self, chat_id, traffic, debt):
+    def set_debt_system(self, chat_id, traffic, debt, dead_line):
         try:
             admin = session.query(admins).filter(admins.chat_id == chat_id).first()
             if admin:
                 admin.traffic = traffic
                 admin.debt = debt
+                admin.debt_days = dead_line
                 session.commit()
                 return True
             return False
@@ -496,20 +448,22 @@ class AdminsQuery:
             data = {
                 "user_name": admin.user_name,
                 "password": admin.password,
+                "status": admin.status,
                 "traffic": admin.traffic,
                 "inb_id": admin.inb_id,
-                "debt": admin.debt
+                "debt": admin.debt,
+                "debt_days": admin.debt_days
             }
             return data
         except:
             return False
         
-    def clear_debt(self, chat_id):
+    def clear_debt(self, chat_id, new_dead_line):
         try:
             update = (
                 session.query(admins)
                 .filter(admins.chat_id == chat_id)
-                .update({"debt": 0})
+                .update({"debt": 0, "debt_days": new_dead_line})
             )
             session.commit()
             return True
@@ -594,4 +548,13 @@ class AdminsQuery:
         except:
             return False
         
+    def descrease_debt_days(self):
+        admins_list = session.query(admins).all()
+        for admin in admins_list:
+            if admin.debt_days > 0:
+                admin.debt_days -= 1
+        session.commit()
+        threading.Timer(86400, self.descrease_debt_days).start()
+
 admins_query = AdminsQuery()
+admins_query.descrease_debt_days()
