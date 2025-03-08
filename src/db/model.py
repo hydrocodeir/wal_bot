@@ -16,7 +16,7 @@ class admins(base):
 
     chat_id = Column("chat_id", Integer, unique=True)
     user_name = Column("user_name", String, unique=True, primary_key=True)
-    password = Column("password", String, primary_key=True)
+    password = Column("password", String)
     inb_id = Column("inb_id", Integer)
     traffic = Column("traffic", String)
     debt = Column("debt", Integer, default=0)
