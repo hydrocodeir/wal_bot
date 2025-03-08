@@ -13,7 +13,7 @@ import time
 if __name__ == "__main__":
     logger.info("Wall bot started")
     try:
-        bot.polling(non_stop=True)
+        bot.polling()
 
     except Exception as e:
         logger.error(f"Wall bot crashed: {e}")

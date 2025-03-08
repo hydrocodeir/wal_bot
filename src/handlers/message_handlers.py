@@ -239,3 +239,4 @@ def dead_line_status(chat_id):
             return False
         else:
             return True
+    return True
