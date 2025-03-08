@@ -16,10 +16,10 @@ class admins(base):
 
     chat_id = Column("chat_id", Integer, unique=True)
     user_name = Column("user_name", String, unique=True, primary_key=True)
-    password = Column("password", String, unique=True, primary_key=True)
+    password = Column("password", String, primary_key=True)
     inb_id = Column("inb_id", Integer)
     traffic = Column("traffic", String)
-    debt = Column("debt", Integer, nullable=False, default=0)
+    debt = Column("debt", Integer, default=0)
     debt_days = Column("debt_days", Integer, default=0)
     status = Column("status", Boolean, default=True)
 
