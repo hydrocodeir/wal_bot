@@ -25,9 +25,13 @@ install_wal_bot() {
 update_wal_bot() {
     echo -e "${YELLOW}Updating Wal Bot...${NC}"
     cd "$INSTALL_DIR"
-    echo -e "${GREEN}Running database migrations...${NC}"
+    echo -e "${GREEN}Pulling latest updates...${NC}"
     sudo docker compose pull
+    echo -e "${GREEN}Starting Wal Bot...${NC}"
     sudo docker compose up -d
+    echo -e "${GREEN}Running database migrations...${NC}"
+    sudo docker exec walbot-walbot-1 alembic upgrade head
+    echo -e "${GREEN}Restarting Wal Bot...${NC}"
     sudo docker compose restart
     echo -e "${GREEN}Wal Bot updated successfully!${NC}"
 }
