@@ -62,7 +62,7 @@ def message_handler(message):
             chat_id,
             f"*\n📘متن قبلی:*\n\n```\n{help_message}```\n\n ♻️لطفا متن جدید خود را وارد کنید:",
             parse_mode="markdown",
-            reply_markup=markup,
+            reply_markup=markup2,
         )
         bot.register_next_step_handler(msg, save_new_help_message)
 
