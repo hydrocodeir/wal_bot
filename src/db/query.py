@@ -536,6 +536,7 @@ class AdminsQuery:
         try:
             admin = session.query(admins).filter(admins.user_name == user_name).first()
             data = {
+                "chat_id": admin.chat_id,
                 "user_name": admin.user_name,
                 "password": admin.password,
                 "status": admin.status,

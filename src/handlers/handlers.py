@@ -1,6 +1,7 @@
 from keyboards.keyboards import (
     main_admin_menu,
     setting_menu,
+    backup_menu,
     admins_menu,
     notif_status_menu,
     admins_control,
@@ -755,11 +756,18 @@ def text_modify_admin(user_name):
     else:
         status = "غیر فعال"
 
+    login_status = admin['chat_id'] 
+    if login_status is None:
+        login_status = "لاگین نشده/ خارج شده"
+    else:
+        login_status = "لاگین شده"
+
     text = (
         f"<b>✓ مشخصات نماینده</b>\n\n"
         f"<b>👤 یوزرنیم:</b> {admin['user_name']}\n"
         f"<b>🔐 پسورد:</b> {admin['password']}\n"
         f"<b>🛜 وضعیت:</b> {status}\n"
+        f"<b>💻 وضعیت لاگین:</b> {login_status}\n"
         f"<b>🔢 اینباند درحال استفاده:</b> {admin['inb_id']}\n"
         f"<b>📊 ترافیک باقی‌مانده:</b> {traffic} GB\n"
         f"<b>💸 بدهی:</b> {debt} تومان\n"
@@ -1749,3 +1757,11 @@ def accept_register_step3(message, user_chat_id, username, password):
             "❌ خطا در افزودن اطلاعات به دیتابیس!",
             reply_markup=main_admin_menu(),
         )
+
+# backup page
+def backup_page(message):
+    bot.send_message(
+        message.chat.id,
+        text="🗂 وارد منوی پشتیبان گیری و بازگردانی دیتابیس وال بات شدید.",
+        reply_markup=backup_menu()
+    )

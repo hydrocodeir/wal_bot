@@ -16,6 +16,7 @@ from handlers.handlers import (
     admins_menu,
     delete_user_step1,
     get_admin_info,
+    backup_page,
 )
 from db.query import admins_query, help_message_query, registering_message
 from messages.messages import messages_setting
@@ -27,6 +28,7 @@ from telebot.types import (
     KeyboardButton,
     ReplyKeyboardMarkup,
 )
+from utils import send_backup, restore_backup
 from api import *
 
 
@@ -80,6 +82,16 @@ def message_handler(message):
 
     if message.text == "🔔 نوتیف ها" and message.chat.id == Admin_chat_id:
         notif_page(message)
+    
+    if message.text == "🗂 پشتیبان گیری" and message.chat.id == Admin_chat_id:
+        backup_page(message)
+
+    if message.text == "📥 دریافت بکاپ" and message.chat.id == Admin_chat_id:
+        send_backup(message)
+
+    if message.text == "📤 بازگردانی بکاپ" and message.chat.id == Admin_chat_id:
+        bot.send_message(chat_id, "📤 (wal.db) لطفاً فایل دیتابیس را ارسال کنید.")
+        bot.register_next_step_handler(message, restore_backup)
 
     if message.text == "👤 افزودن کاربر":
         admin = admins_query.admin_data(chat_id)
