@@ -1,6 +1,7 @@
 from keyboards.keyboards import (
     main_admin_menu,
     setting_menu,
+    backup_menu,
     admins_menu,
     notif_status_menu,
     admins_control,
@@ -358,7 +359,7 @@ def callback_handler(call):
         card = card["card_number"]
         msg = bot.send_message(
             chat_id,
-            f"*💳 شماره حساب فعلی:\n{card}*\n\n ♻️لطفا شماره حساب جدید خود را وارد کنید:",
+            f"*💳 شماره حساب فعلی:\n{card}*\n\n ♻️ لطفا شماره حساب جدید خود را وارد کنید(با یا بدون نام صاحب حساب):",
             parse_mode="markdown",
             reply_markup=markup,
         )
@@ -755,11 +756,18 @@ def text_modify_admin(user_name):
     else:
         status = "غیر فعال"
 
+    login_status = admin['chat_id'] 
+    if login_status is None:
+        login_status = "لاگین نشده/ خارج شده"
+    else:
+        login_status = "لاگین شده"
+
     text = (
         f"<b>✓ مشخصات نماینده</b>\n\n"
         f"<b>👤 یوزرنیم:</b> {admin['user_name']}\n"
         f"<b>🔐 پسورد:</b> {admin['password']}\n"
         f"<b>🛜 وضعیت:</b> {status}\n"
+        f"<b>💻 وضعیت لاگین:</b> {login_status}\n"
         f"<b>🔢 اینباند درحال استفاده:</b> {admin['inb_id']}\n"
         f"<b>📊 ترافیک باقی‌مانده:</b> {traffic} GB\n"
         f"<b>💸 بدهی:</b> {debt} تومان\n"
@@ -940,6 +948,13 @@ def delete_admin(message, user_name):
             f"✅ ادمین با یوزرنیم: [{user_name}] حذف شد ",
             reply_markup=main_admin_menu()
         )
+    else:
+        bot.send_message(
+            message.chat.id,
+            "⚠️ اگه تایید نمیکنید لطفا دکمه بازگشت رو بزنید",
+            )
+        return bot.register_next_step_handler(message, lambda msg: delete_admin(msg, user_name))
+    
     
     
 
@@ -1247,6 +1262,16 @@ def send_emails_(chat_id):
             expiry_time = client.get("expiryTime", 0)
             remaining_days = 0
 
+            get_traffic = api.user_obj(email)
+            response = get_traffic.json()
+            obj = response.get("obj", {})
+            uploaded = obj.get("up")
+            downloaded = obj.get("down")
+            total_bytes = obj.get("total")
+            traffic = (uploaded + downloaded) / (1024**3)
+            current_traffic = total_bytes / (1024**3) - traffic
+
+
             if expiry_time > 0:
                 current_time = int(time.time() * 1000)
                 remaining_time_ms = expiry_time - current_time
@@ -1255,7 +1280,7 @@ def send_emails_(chat_id):
 
             user_list += "```"
             index_emoji = number_to_emoji_string(index)
-            user_list += f"\n{index_emoji}| 👤 {email}   (⌛ = {remaining_days}) \n\n"
+            user_list += f"\n{index_emoji}| 👤 {email}    ⌛ = {remaining_days}  🔋 = {current_traffic} \n\n"
             user_list += "```"
             if len(user_list) > 3500:
                 bot.send_message(
@@ -1749,3 +1774,11 @@ def accept_register_step3(message, user_chat_id, username, password):
             "❌ خطا در افزودن اطلاعات به دیتابیس!",
             reply_markup=main_admin_menu(),
         )
+
+# backup page
+def backup_page(message):
+    bot.send_message(
+        message.chat.id,
+        text="🗂 وارد منوی پشتیبان گیری و بازگردانی دیتابیس وال بات شدید.",
+        reply_markup=backup_menu()
+    )

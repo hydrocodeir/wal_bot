@@ -3,7 +3,7 @@ from telebot.types import (
     InlineKeyboardButton,
     InlineKeyboardMarkup,
 )
-from db.query import price_query
+
 
 
 # main admin menu
@@ -26,10 +26,23 @@ def setting_menu():
         "📘 متن راهنما",
         "🧾 متن ثبت نام",
         "🔔 نوتیف ها",
+        "🗂 پشتیبان گیری",
         "🔙 بازگشت",
     )
     return reply_keyboard
 
+# backup menu
+def backup_menu():
+    reply_keyboard = ReplyKeyboardMarkup(
+        resize_keyboard=True, one_time_keyboard=False, row_width=2
+    )
+
+    reply_keyboard.add(
+        "📥 دریافت بکاپ",
+        "📤 بازگردانی بکاپ",
+        "🔙 بازگشت",
+    )
+    return reply_keyboard
 
 # change notif status
 def notif_status_menu():
