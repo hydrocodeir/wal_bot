@@ -948,6 +948,13 @@ def delete_admin(message, user_name):
             f"✅ ادمین با یوزرنیم: [{user_name}] حذف شد ",
             reply_markup=main_admin_menu()
         )
+    else:
+        bot.send_message(
+            message.chat.id,
+            "⚠️ اگه تایید نمیکنید لطفا دکمه بازگشت رو بزنید",
+            )
+        return bot.register_next_step_handler(message, lambda msg: delete_admin(msg, user_name))
+    
     
     
 

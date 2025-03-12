@@ -362,13 +362,14 @@ class AdminsQuery:
                 if admin.traffic.lower() =="false":
                     admin.traffic = traffic
                 else:    
-                    new_traffic = int(admin.traffic) + traffic
+                    new_traffic = int(admin.traffic) + int(traffic)
                     admin.traffic = str(new_traffic)
                 session.commit()
                 return True
             return False
         except:
             return False
+        
     def set_debt_system(self, chat_id, traffic, debt, dead_line):
         try:
             admin = session.query(admins).filter(admins.chat_id == chat_id).first()
