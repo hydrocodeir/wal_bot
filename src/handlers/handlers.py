@@ -1255,6 +1255,16 @@ def send_emails_(chat_id):
             expiry_time = client.get("expiryTime", 0)
             remaining_days = 0
 
+            get_traffic = api.user_obj(email)
+            response = get_traffic.json()
+            obj = response.get("obj", {})
+            uploaded = obj.get("up")
+            downloaded = obj.get("down")
+            total_bytes = obj.get("total")
+            traffic = (uploaded + downloaded) / (1024**3)
+            current_traffic = total_bytes / (1024**3) - traffic
+
+
             if expiry_time > 0:
                 current_time = int(time.time() * 1000)
                 remaining_time_ms = expiry_time - current_time
@@ -1263,7 +1273,7 @@ def send_emails_(chat_id):
 
             user_list += "```"
             index_emoji = number_to_emoji_string(index)
-            user_list += f"\n{index_emoji}| 👤 {email}   (⌛ = {remaining_days}) \n\n"
+            user_list += f"\n{index_emoji}| 👤 {email}    ⌛ = {remaining_days}  🔋 = {current_traffic} \n\n"
             user_list += "```"
             if len(user_list) > 3500:
                 bot.send_message(
