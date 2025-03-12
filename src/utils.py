@@ -42,7 +42,7 @@ def restore_backup(message):
                 message.chat.id,
                 "✅ دیتابیس با موفقیت جایگزین شد."
             )
-            # os._exit(1)
+            os._exit(1)
         else:
             bot.send_message(
                 message.chat.id,
