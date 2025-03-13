@@ -10,6 +10,7 @@ import time
 
 
 
+
 if __name__ == "__main__":
     logger.info("Wall bot started")
     try:

@@ -311,7 +311,7 @@ class PriceQuery:
             ]
             return pricing_list
         except:
-            False
+            return False
 
     def get_plan(self, id):
         try:
@@ -407,7 +407,7 @@ class AdminsQuery:
             ]
             return admins_list
         except:
-            False
+            return False
 
     def add_chat_id(self, user_name, password, chat_id):
         try:
@@ -427,7 +427,7 @@ class AdminsQuery:
             else:
                 return False
         except:
-            False
+            return False
 
     def remove_chat_id(self, chat_id):
         try:
@@ -445,7 +445,15 @@ class AdminsQuery:
         try:
             admin = session.query(admins).filter(admins.chat_id == chat_id).first()
             if not admin:
-                return False
+                return {
+                    "user_name": None,
+                    "password": None,
+                    "status": False,
+                    "traffic": "0",
+                    "inb_id": None,
+                    "debt": 0,
+                    "debt_days": 0
+                }
             data = {
                 "user_name": admin.user_name,
                 "password": admin.password,
@@ -457,7 +465,15 @@ class AdminsQuery:
             }
             return data
         except:
-            return False
+            return {
+                "user_name": None,
+                "password": None,
+                "status": False,
+                "traffic": "0",
+                "inb_id": None,
+                "debt": 0,
+                "debt_days": 0
+            }
         
     def clear_debt(self, chat_id, new_dead_line):
         try:
