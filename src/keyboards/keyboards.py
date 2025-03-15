@@ -23,6 +23,7 @@ def setting_menu():
     reply_keyboard.add(
         "💵 پلن پیش پرداخت",
         "💸 پلن پس پرداخت",
+        "💻 پنل ها",
         "📘 متن راهنما",
         "🧾 متن ثبت نام",
         "🔔 نوتیف ها",
@@ -116,15 +117,18 @@ def admin_modify_control(user_name):
         text="🪫 کاهش ترافیک", callback_data=f"reduse_traffic_{user_name}"
     )
     button3 = InlineKeyboardButton(
-        text="🆔 تغییر اینباند", callback_data=f"change_inb_{user_name}"
+        text="🆔 تغییر ایدی پنل", callback_data=f"change_panel_{user_name}"
     )
     button4 = InlineKeyboardButton(
-        text="♻️ فعال/غیرفعال", callback_data=f"status_for_{user_name}"
+        text="🆔 تغییر ایدی اینباند", callback_data=f"change_inb_{user_name}"
     )
     button5 = InlineKeyboardButton(
-        text="❌ حذف", callback_data=f"delete_admin_{user_name}"
+        text="♻️ فعال/غیرفعال", callback_data=f"status_for_{user_name}"
     )
-    markup.add(button1, button2, button3, button4, button5)
+    button6 = InlineKeyboardButton(
+        text="❌ حذف نماینده", callback_data=f"delete_admin_{user_name}"
+    )
+    markup.add(button1, button2, button3, button4, button5, button6)
     return markup
 
 
@@ -175,4 +179,18 @@ def payment_methods_for_debt():
         text="💳 کارت به کارت", callback_data="card_payment_for_debt"
     )
     markup.add(button1)
+    return markup
+
+def panels_control():
+    markup = InlineKeyboardMarkup(row_width=1)
+    button1 = InlineKeyboardButton(
+        text="➕ افزودن پنل", callback_data="add_panel"
+    )
+    button2 = InlineKeyboardButton(
+        text="⚙️ تغییر اطلاعات پنل", callback_data="edit_panel"
+    )
+    button3 = InlineKeyboardButton(
+        text="❌ حذف پنل", callback_data="delete_panel"
+    )
+    markup.add(button1, button2, button3)
     return markup

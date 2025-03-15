@@ -1,4 +1,4 @@
-from db.model import session, BotSettings, TrafficPrice, admins, priceing, HelpMessage, RegisteringMessage, Card
+from db.model import session, BotSettings, TrafficPrice, admins, priceing, HelpMessage, RegisteringMessage, Card, Panels
 import threading
 
 # default settings
@@ -110,7 +110,6 @@ class SettingsQuery:
         except:
             return False
 
-setting_query = SettingsQuery()
 
 # traffic price
 class TrafficPriceQuery:
@@ -158,7 +157,7 @@ class TrafficPriceQuery:
         except:
             return False
 
-traffic_price_query = TrafficPriceQuery()
+
 
 
 # help message query
@@ -186,8 +185,6 @@ class MessageQuery:
         except:
             return False
 
-
-help_message_query = MessageQuery()
 
 
 # register message query
@@ -224,7 +221,6 @@ class RegisterQuery:
             return False
 
 
-registering_message = RegisterQuery()
 
 
 # card query
@@ -253,7 +249,6 @@ class CardQuery:
             return False
 
 
-card_number_query = CardQuery()
 
 
 # pricing query
@@ -327,17 +322,27 @@ class PriceQuery:
             return False
 
 
-price_query = PriceQuery()
-
 
 # admins query
 class AdminsQuery:
-    def add_admin(self, user_name, password, traffic, inb_id):
+    def add_admin(self, user_name, password, traffic, panel_id, inb_id):
         try:
             new_admin = admins(
-                user_name=user_name, password=password, traffic=traffic, inb_id=inb_id
+                user_name=user_name, password=password, traffic=traffic, panel_id=panel_id, inb_id=inb_id
             )
             session.add(new_admin)
+            session.commit()
+            return True
+        except:
+            return False
+        
+    def change_panel(self, user_name, panel_id):
+        try:
+            update = (
+                session.query(admins)
+                .filter(admins.user_name == user_name)
+                .update({"panel_id": panel_id})
+            )
             session.commit()
             return True
         except:
@@ -400,6 +405,7 @@ class AdminsQuery:
                     "user_name": admin.user_name,
                     "password": admin.password,
                     "traffic": admin.traffic,
+                    "panel_id": admin.panel_id,
                     "inb_id": admin.inb_id,
                     "debt": admin.debt
                 }
@@ -453,7 +459,8 @@ class AdminsQuery:
                 "traffic": admin.traffic,
                 "inb_id": admin.inb_id,
                 "debt": admin.debt,
-                "debt_days": admin.debt_days
+                "debt_days": admin.debt_days,
+                "panel_id": admin.panel_id
             }
             return data
         except:
@@ -478,9 +485,9 @@ class AdminsQuery:
             if not admin:
                 return False
             if admin.traffic.lower() == "false":
-                admin.debt += delta
+                admin.debt += int(delta)
             else:
-                new_traffic = int(admin.traffic) - abs(delta)
+                new_traffic = int(admin.traffic) - abs(int(delta))
                 if new_traffic < 0:
                     new_traffic = 0
                 admin.traffic = str(new_traffic)
@@ -542,6 +549,7 @@ class AdminsQuery:
                 "password": admin.password,
                 "status": admin.status,
                 "traffic": admin.traffic,
+                "panel_id": admin.panel_id,
                 "inb_id": admin.inb_id,
                 "debt": admin.debt,
                 "debt_days": admin.debt_days
@@ -558,5 +566,96 @@ class AdminsQuery:
         session.commit()
         threading.Timer(86400, self.descrease_debt_days).start()
 
+# panels query
+class PanelsQuery:
+    def add_panel(self, name, address, sub, username, password):
+        try:
+            new_panel = Panels(
+                name = name,
+                address = address,
+                sub = sub,
+                username = username,
+                password = password
+            )
+            session.add(new_panel)
+            session.commit()
+            return True
+        except:
+            return False
+
+    def show_panels(self):
+        try:
+            panels = session.query(Panels).all()
+            panels_data = [
+                {
+                    "id": panel.id,
+                    "name": panel.name,
+                    "address": panel.address,
+                    "sub": panel.sub,
+                    "username": panel.username,
+                    "password": panel.password
+                }
+                for panel in panels
+            ]
+            return panels_data
+        except:
+            return False
+        
+    def delete_panel(self, id):
+        try:
+            delete = session.query(Panels).filter(Panels.id == id).first()
+            session.delete(delete)
+            session.commit()
+            return True
+        except:
+            return False
+        
+    def edit_panel(self, id, name, address, sub, username, password):
+        try:
+            update = (
+                session.query(Panels)
+                .filter(Panels.id == id)
+                .update({"name": name, "address": address, "sub": sub, "username": username, "password": password})
+            )
+            session.commit()
+            return True
+        except:
+            return False
+        
+    def get_panel_data(self, id):
+        try:
+            panel = session.query(Panels).filter(Panels.id == id).first()
+            if not panel:
+                return False
+            data = {
+                "address": panel.address,
+                "username": panel.username,
+                "password": panel.password,
+                "sub": panel.sub,
+                "name": panel.name
+            }
+            
+            return data
+        except:
+            return False    
+    
+    def approve_panel_for_modify(self, id):
+        try:
+            approve = session.query(Panels).filter(Panels.id == id).first()
+            if approve:
+                return True
+            else:
+                return False
+        except:
+            return False
+        
+
+setting_query = SettingsQuery()
+traffic_price_query = TrafficPriceQuery()
+help_message_query = MessageQuery()
+registering_message = RegisterQuery()
+card_number_query = CardQuery()
+price_query = PriceQuery()
 admins_query = AdminsQuery()
 admins_query.descrease_debt_days()
+panels_query = PanelsQuery()

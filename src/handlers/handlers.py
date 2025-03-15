@@ -11,7 +11,8 @@ from keyboards.keyboards import (
     debt_and_buy_traffic,
     debt_control,
     payment_methods,
-    admin_modify_control
+    admin_modify_control,
+    panels_control
 
 )
 from pay.card_method import receive_photo_step, receive_photo_step_for_debt
@@ -23,8 +24,9 @@ from db.query import (
     help_message_query,
     registering_message,
     setting_query,
+    panels_query,
 )
-from config import bot, Admin_chat_id, PANEL_ADDRES, SUB_ADDRES
+from config import bot, Admin_chat_id
 from handlers.notifications import notif_setting
 import utils
 import uuid
@@ -44,11 +46,11 @@ from telebot.types import (
     KeyboardButton,
     ReplyKeyboardMarkup,
 )
-from api import PanelAPI
+from api import PanelAPI, get_panel_info
 
 api = PanelAPI()
-data = {"username": os.getenv("PANEL_USER"), "password": os.getenv("PANEL_PASS")}
-sub = SUB_ADDRES
+
+
 
 
 # start message
@@ -80,6 +82,33 @@ def start_message(message):
                 reply_markup=markup,
             )
 
+# panels page
+def panels_page(message):
+    panels = panels_query.show_panels()
+    if not panels:
+        bot.reply_to(
+            message, "هنوز هیچ پنلی ثبت نکردید\n\nپنل های پشتیبانی شده: 3X-ui و TX-ui", reply_markup=panels_control()
+        )
+    else:
+        response = "🌐<b> پنل های ثبت شده:</b>\n\n"
+        for panel in panels:
+            response += (
+                f"<blockquote>"
+                f"🆔 ایدی:{panel['id']}\n\n"
+                f"◻️ نام: {panel['name']}\n"
+                f"◻️ ادرس: "
+                f"{panel['address']}\n"
+                f"◻️ سابسکریپشن: "
+                f"{panel['sub']}\n"
+                f"◻️ یوزرنیم: "
+                f"{panel['username']}\n"
+                f"◻️ پسورد: "
+                f"{panel['password']}\n"
+                f"</blockquote>\n"
+            )
+        bot.reply_to(
+            message, response, parse_mode="HTML", reply_markup=panels_control()
+        )
 
 # admins page
 def admins_page(message):
@@ -103,6 +132,7 @@ def admins_page(message):
             response += (
                 f"<pre>👤 یوزرنیم: {admin['user_name']}</pre>\n"
                 f"🔐 پسورد: {admin['password']}\n"
+                f"🔢 ایدی پنل درحال استفاده: {admin['panel_id']}\n"
                 f"🔢 اینباند درحال استفاده: {admin['inb_id']}\n"
                 f"📊 ترافیک باقی‌مانده: {traffic} GB\n"
                 f"💸 بدهی: {debt} تومان\n"
@@ -281,6 +311,17 @@ def callback_handler(call):
         )
         bot.register_next_step_handler(call.message, modify_admin)
 
+    elif call.data.startswith("change_panel_"):
+        user_name = call.data.split("_")[2]
+        bot.send_message(
+            chat_id=chat_id,
+            text=messages_setting.CHANGE_PANEL,
+            reply_markup=markup
+        )
+        bot.register_next_step_handler(
+            call.message, lambda msg: edit_panel_for_admin(msg, user_name)
+        )
+
     elif call.data.startswith("change_inb_"):
         user_name = call.data.split("_")[2]
         bot.send_message(
@@ -312,6 +353,18 @@ def callback_handler(call):
         bot.register_next_step_handler(
             call.message, lambda msg: delete_admin(msg, user_name)
             )
+        
+    elif call.data == "add_panel":
+        bot.send_message(chat_id=chat_id, text=messages_setting.ADD_PANEL_STEP1, reply_markup=markup)
+        bot.register_next_step_handler(call.message, add_panel_step1)
+
+    elif call.data == "edit_panel":
+        bot.send_message(chat_id=chat_id, text="برای ویرایش اطلاعات پنل، ایدی پنل مورد نظر رو بفرستید:", reply_markup=markup)
+        bot.register_next_step_handler(call.message, edit_panel_step1)
+
+    elif call.data == "delete_panel":
+        bot.send_message(chat_id=chat_id, text="برای حذف پنل، ایدی پنل مورد نظر رو بفرستید:", reply_markup=markup)
+        bot.register_next_step_handler(call.message, delete_panel_step1)
         
     elif call.data.startswith("reduse_traffic_"):
         user_name = call.data.split("_")[2]
@@ -434,8 +487,9 @@ def callback_handler(call):
         email = call.data.split("_")[1]
         bot.delete_message(call.message.chat.id, call.message.message_id)
         delete_user_step2(call, email)
-
+        
     elif call.data.startswith("select_plan_"):
+        data = {}
         bot.delete_message(call.message.chat.id, call.message.message_id)
         id = call.data.split("_")[2]
         bot.send_message(
@@ -623,6 +677,210 @@ def change_dead_line(message):
     except:
         pass
 
+# add panel
+def add_panel_step1(message):
+    if message.text == "❌ بازگشت ❌":
+        return bot.send_message(
+            message.chat.id,
+            "✅ عملیات لغو شد.",
+            reply_markup=setting_menu(),
+        )
+    try:
+        panel_name = message.text
+        bot.send_message(message.chat.id, messages_setting.ADD_PANEL_STEP2)
+        bot.register_next_step_handler(
+            message, lambda msg: add_panel_step2(msg, panel_name)
+        )
+    except ValueError:
+        bot.send_message(message.chat.id, "❌ Please send a valid world.")
+    
+def add_panel_step2(message, panel_name):
+    if message.text == "❌ بازگشت ❌":
+        return bot.send_message(
+            message.chat.id,
+            "✅ عملیات لغو شد.",
+            reply_markup=setting_menu(),
+        )
+    try:
+        address = message.text
+        bot.send_message(message.chat.id, messages_setting.ADD_PANEL_STEP3)
+        bot.register_next_step_handler(
+            message, lambda msg: add_panel_step3(msg, panel_name, address)
+        )
+    except ValueError:
+        bot.send_message(message.chat.id, "❌ Please send a valid world.")
+
+def add_panel_step3(message, panel_name, address):
+    if message.text == "❌ بازگشت ❌":
+        return bot.send_message(
+            message.chat.id,
+            "✅ عملیات لغو شد.",
+            reply_markup=setting_menu(),
+        )   
+    try:
+        sub = message.text
+        bot.send_message(message.chat.id, messages_setting.ADD_PANEL_STEP4)
+        bot.register_next_step_handler(
+            message, lambda msg: add_panel_step4(msg, panel_name, address, sub)
+        )
+    except ValueError:
+        bot.send_message(message.chat.id, "❌ Please send a valid world.")
+
+def add_panel_step4(message, panel_name, address, sub):
+    if message.text == "❌ بازگشت ❌":
+        return bot.send_message(
+            message.chat.id,
+            "✅ عملیات لغو شد.",
+            reply_markup=setting_menu(),
+        )
+    try:
+        username = message.text
+        bot.send_message(message.chat.id, messages_setting.ADD_PANEL_STEP5)
+        bot.register_next_step_handler(
+            message, lambda msg: add_panel_step5(msg, panel_name, address, sub, username)
+        )
+    except ValueError:
+        bot.send_message(message.chat.id, "❌ Please send a valid world.")
+
+def add_panel_step5(message, panel_name, address, sub, username):
+    if message.text == "❌ بازگشت ❌":
+        return bot.send_message(
+            message.chat.id,
+            "✅ عملیات لغو شد.",
+            reply_markup=setting_menu(),
+        )   
+    try:
+        password = message.text
+        if api.login(address, username, password):
+            panels_query.add_panel(panel_name, address, sub, username, password) 
+            bot.send_message(message.chat.id, "✅ پنل شما با موفقیت اضافه شد", reply_markup=setting_menu())
+        else:
+            bot.send_message(message.chat.id, "❌ لاگین ناموفق بود، یکی از مقادیر اشتباه وارد شده",reply_markup=setting_menu())
+    except:
+        pass
+
+# edit panel
+def edit_panel_step1(message):
+    if message.text == "❌ بازگشت ❌":
+        return bot.send_message(
+            message.chat.id,
+            "✅ عملیات لغو شد.",
+            reply_markup=setting_menu(),
+        )
+    try:
+        id = message.text
+        if panels_query.approve_panel_for_modify(id):
+            bot.send_message(message.chat.id, "اسم جدید پنل را وارد کنید:")
+            bot.register_next_step_handler(message, lambda msg: edit_panel_step2(msg, id))
+        else:
+            bot.send_message(message.chat.id, "❌ پنل مورد نظر یافت نشد دوباره تلاش کنید")
+            bot.register_next_step_handler(message, edit_panel_step1)
+    except ValueError:
+        bot.send_message(message.chat.id, "❌ Please send a valid world.")
+
+def edit_panel_step2(message, id):
+    if message.text == "❌ بازگشت ❌":
+        return bot.send_message(
+            message.chat.id,
+            "✅ عملیات لغو شد.",
+            reply_markup=setting_menu(),
+        )   
+    try:
+        name = message.text
+        bot.send_message(message.chat.id, " ادرس جدید پنل را وارد کنید مثال:\n panel.example.com/path")
+        bot.register_next_step_handler(message, lambda msg: edit_panel_step3(msg, id, name))
+    except ValueError:
+        bot.send_message(message.chat.id, "❌ Please send a valid world.")
+
+def edit_panel_step3(message, id, name):
+    if message.text == "❌ بازگشت ❌":
+        return bot.send_message(
+            message.chat.id,
+            "✅ عملیات لغو شد.",
+            reply_markup=setting_menu(),
+        )
+    try:
+        address = message.text
+        bot.send_message(message.chat.id, "ادرس سابسکریپشن جدید پنل را وارد کنید مثال:\n sub.example.com/subpath")
+        bot.register_next_step_handler(message, lambda msg: edit_panel_step4(msg, id, name, address))
+    except ValueError:
+        bot.send_message(message.chat.id, "❌ Please send a valid world.")
+
+def edit_panel_step4(message, id, name, address):
+    if message.text == "❌ بازگشت ❌":
+        return bot.send_message(
+            message.chat.id,
+            "✅ عملیات لغو شد.",    
+            reply_markup=setting_menu(),
+        )
+    try:
+        sub = message.text
+        bot.send_message(message.chat.id, "یوزرنیم جدید پنل را وارد کنید:")
+        bot.register_next_step_handler(message, lambda msg: edit_panel_step5(msg, id, name, address, sub))
+    except ValueError:
+        bot.send_message(message.chat.id, "❌ Please send a valid world.")
+
+def edit_panel_step5(message, id, name, address, sub):
+    if message.text == "❌ بازگشت ❌":
+        return bot.send_message(
+            message.chat.id,
+            "✅ عملیات لغو شد.",
+            reply_markup=setting_menu(),
+        )
+    try:
+        username = message.text
+        bot.send_message(message.chat.id, "پسورد جدید پنل را وارد کنید:")
+        bot.register_next_step_handler(message, lambda msg: edit_panel_step6(msg, id, name, address, sub, username))
+    except ValueError:
+        bot.send_message(message.chat.id, "❌ Please send a valid world.")
+        
+def edit_panel_step6(message, id, name, address, sub, username):
+    if message.text == "❌ بازگشت ❌":
+        return bot.send_message(
+            message.chat.id,
+            "✅ عملیات لغو شد.",
+            reply_markup=setting_menu(),
+        )
+    try:
+        password = message.text
+        if panels_query.edit_panel(id, name, address, sub, username, password):
+            bot.send_message(message.chat.id, "✅ پنل شما با موفقیت ویرایش شد", reply_markup=setting_menu())
+        else:
+            bot.send_message(message.chat.id, "❌ یکی از مقادیر اشتباه وارد شده، لطفا به مثال ها هنگام ویرایش پنل توجه کنید", reply_markup=setting_menu())
+    except:
+        pass
+
+# delete panel
+def delete_panel_step1(message):
+    if message.text == "❌ بازگشت ❌":
+        return bot.send_message(
+            message.chat.id,
+            "✅ عملیات لغو شد.",
+            reply_markup=setting_menu(),
+        )
+    try:
+        id = message.text
+        if panels_query.approve_panel_for_modify(id):
+            bot.send_message(message.chat.id, "جهت حذف این پنل کلمه [تایید] رو بفرستید:")
+            bot.register_next_step_handler(message, lambda msg: delete_panel_step2(msg, id))
+        else:
+            bot.send_message(message.chat.id, "❌ پنل مورد نظر یافت نشد دوباره تلاش کنید")
+            bot.register_next_step_handler(message, delete_panel_step1)
+    except ValueError:
+        bot.send_message(message.chat.id, "❌ Please send a valid world.")
+
+
+def delete_panel_step2(message, id):
+    if message.text == "تایید":
+        panels_query.delete_panel(id)
+        bot.send_message(message.chat.id, "✅ پنل مورد نظر با موفقیت حذف شد", reply_markup=setting_menu())
+    else:
+        return bot.send_message(
+            message.chat.id,
+            "✅ عملیات لغو شد.",
+            reply_markup=setting_menu(),
+        )
+
 
 # add plan
 def add_plan_step1(message):
@@ -768,6 +1026,7 @@ def text_modify_admin(user_name):
         f"<b>🔐 پسورد:</b> {admin['password']}\n"
         f"<b>🛜 وضعیت:</b> {status}\n"
         f"<b>💻 وضعیت لاگین:</b> {login_status}\n"
+        f"<b>🔢 ایدی پنل درحال استفاده:</b> {admin['panel_id']}\n"
         f"<b>🔢 اینباند درحال استفاده:</b> {admin['inb_id']}\n"
         f"<b>📊 ترافیک باقی‌مانده:</b> {traffic} GB\n"
         f"<b>💸 بدهی:</b> {debt} تومان\n"
@@ -829,10 +1088,21 @@ def add_admin_step3(message, user_name, password):
 
 
 def add_admin_step4(message, user_name, password, trafiic):
+    try:
+        panel_id = int(message.text)
+        bot.send_message(message.chat.id, messages_setting.ADD_ADMIN_STEP5)
+        bot.register_next_step_handler(
+            message, lambda msg: add_admin_step5(msg, user_name, password, trafiic, panel_id)
+        )
+    except ValueError:
+        bot.send_message(message.chat.id, "❌ Please send a valid world.")
+
+
+def add_admin_step5(message, user_name, password, trafiic, panel_id):
     if message.content_type == "text":
         try:
             inb_id = int(message.text)
-            if admins_query.add_admin(user_name, password, trafiic, inb_id):
+            if admins_query.add_admin(user_name, password, trafiic, panel_id, inb_id ):
                 bot.send_message(
                     message.chat.id,
                     f"✅ ادمین اضافه شد: \n👤username: {user_name} \n🔐password: {password} \n🔋total trafiic: {trafiic}",
@@ -905,7 +1175,34 @@ def reduse_traffic_by_admin(message, user_name):
                 "❌خطا:\nنماینده مورد نظر در پلن پس پرداخت فعال است و ترافیکی ندارد",
                 reply_markup=main_admin_menu()
             )
+# edit panel id
+def edit_panel_for_admin(message, user_name):
+    if message.text == "❌ بازگشت ❌":
+        return bot.send_message(
+            message.chat.id,
+            "✅ عملیات ویرایش راهنما لغو شد.",
+            reply_markup=main_admin_menu(),
+        )
+    else:
+        try:
+            new_panel = int(message.text)
+        except ValueError:
+            bot.send_message(
+                message.chat.id,
+                "❌ لطفاً یک عدد معتبر وارد کنید.",
+            )
+            return bot.register_next_step_handler(message, lambda msg: edit_panel_for_admin(msg, user_name))
+        
+        if admins_query.change_panel(user_name, new_panel):
+            bot.send_message(
+                message.chat.id,
+                f"✅ ایدی پنل نماینده ( {user_name} ) به {new_panel} تغییر یافت",
+                reply_markup=main_admin_menu()
+            )
+            
 
+            
+            
 # edit inb id
 def edit_inb_step1(message, user_name):
     if message.text == "❌ بازگشت ❌":
@@ -1100,9 +1397,11 @@ def add_user_step3(message):
 
     except Exception as e:
         bot.send_message(
-            chat_id, "❌ مقدار وارد شده صحیح نیست. لطفاً یک عدد معتبر وارد کنید."
+            chat_id, 
+            f"❌ خطایی رخ داد:\n{str(e)}\nلطفاً دوباره تلاش کنید.", 
+            reply_markup=admins_menu()
         )
-        bot.register_next_step_handler(message, add_user_step3)
+        return
 
 
 
@@ -1125,9 +1424,11 @@ def add_user_f(chat_id):
     c_uuid = str(uuid.uuid4())
     get = admins_query.admin_data(chat_id)
     inb_id = get["inb_id"]
-    request = api.add_user(c_uuid, email, bytes_value, expiry_time, sub_id, inb_id)
+    request = api.add_user(chat_id, c_uuid, email, bytes_value, expiry_time, sub_id, inb_id)
 
     if request:
+        get_sub = get_panel_info(chat_id)
+        sub = get_sub["sub"]
         sub_url = f"https://{sub}/{sub_id}"
         qr = sub_url
         img = segno.make(qr)
@@ -1220,7 +1521,7 @@ def cancel_button():
 def send_emails_(chat_id):
     get_admin_inb_id = admins_query.admin_data(chat_id)
     inb_id = get_admin_inb_id["inb_id"]
-    get = api.show_users(inb_id)
+    get = api.show_users(chat_id, inb_id)
     if get:
         try:
             data = get.json()
@@ -1262,7 +1563,7 @@ def send_emails_(chat_id):
             expiry_time = client.get("expiryTime", 0)
             remaining_days = 0
 
-            get_traffic = api.user_obj(email)
+            get_traffic = api.user_obj(chat_id, email)
             response = get_traffic.json()
             obj = response.get("obj", {})
             uploaded = obj.get("up")
@@ -1280,7 +1581,7 @@ def send_emails_(chat_id):
 
             user_list += "```"
             index_emoji = number_to_emoji_string(index)
-            user_list += f"\n{index_emoji}| 👤 {email}    ⌛ = {remaining_days}  🔋 = {current_traffic} \n\n"
+            user_list += f"\n{index_emoji}| 👤 {email}    ⌛ = {remaining_days} Days 🔋 = {int(current_traffic)} GB\n\n"
             user_list += "```"
             if len(user_list) > 3500:
                 bot.send_message(
@@ -1339,9 +1640,11 @@ def send_sub_id(message):
     email = selected_user.get("email", "Unknown")
     sub_id = selected_user.get("subId", "Sub ID not found")
 
-    get = api.user_obj(email)
+    get = api.user_obj(chat_id, email)
 
     if get.status_code == 200:
+        get_sub = get_panel_info(chat_id)
+        sub = get_sub["sub"]
         response = get.json()
         sub_url = f"https://{sub}/{sub_id}"
         qr = sub_url
@@ -1397,7 +1700,7 @@ def renew_user_step1(message):
     email = message.text
     chat_id = message.chat.id
 
-    get = api.user_obj(email)
+    get = api.user_obj(chat_id, email)
 
     if get.status_code == 200:
         try:
@@ -1448,7 +1751,7 @@ def renew_user_step1(message):
             get_admin_inb_id = admins_query.admin_data(chat_id)
             inb_id = get_admin_inb_id["inb_id"]
 
-            response = api.reset_traffic(inb_id, email)
+            response = api.reset_traffic(chat_id, inb_id, email)
             if response.status_code == 200:
                 bot.send_message(
                     chat_id,
@@ -1489,12 +1792,12 @@ def renew_user_step2(message, email):
     expiry_time = int(
         (datetime.datetime.now() + datetime.timedelta(days=days)).timestamp() * 1000
     )
-    get = api.user_obj(email)
+    get = api.user_obj(chat_id, email)
 
     if get.status_code == 200:
         get_admin_inb_id = admins_query.admin_data(chat_id)
         inb_id = get_admin_inb_id["inb_id"]
-        response = api.get_inbound(inb_id)
+        response = api.get_inbound(chat_id, inb_id)
 
         if response.status_code == 200:
             data = response.json()
@@ -1526,7 +1829,7 @@ def renew_user_step2(message, email):
             }
 
             proces = {"id": inb_id, "settings": json.dumps(settings)}
-            res = api.update_email(id, proces)
+            res = api.update_email(chat_id, id, proces)
 
             if res.status_code == 200:
                 bot.send_message(
@@ -1562,7 +1865,7 @@ def renew_user_step2(message, email):
 def get_users_info_by_email(email, chat_id):
     get_admin_inb_id = admins_query.admin_data(chat_id)
     inb_id = get_admin_inb_id["inb_id"]
-    response = api.get_inbound(inb_id)
+    response = api.get_inbound(chat_id, inb_id)
 
     if response.status_code == 200:
         data = response.json()
@@ -1613,7 +1916,7 @@ def delete_user_step2(call, email):
     get_admin_inb_id = admins_query.admin_data(chat_id)
     inb_id = get_admin_inb_id["inb_id"]
 
-    response = api.delete_user(inb_id, user_id)
+    response = api.delete_user(chat_id, inb_id, user_id)
     try:
         bot.delete_message(chat_id, message_id)
     except:
@@ -1740,23 +2043,33 @@ def accept_register_step1(message, user_chat_id):
         message, lambda msg: accept_register_step2(msg, user_chat_id, username)
     )
 
-
 def accept_register_step2(message, user_chat_id, username):
     password = message.text
     bot.send_message(
         Admin_chat_id,
-        "3️⃣مرحله سوم\nحالا عدد اینباند مختص این نماینده رو وارد کنید:\n(توجه کنید که اینباند خالی باشه و نماینده دیگری روی اون فعال نباشه)",
+        "3️⃣مرحله سوم\nایدی پنل موردنظر برای این نماینده رو وارد کنید:",
     )
     bot.register_next_step_handler(
         message,
         lambda msg: accept_register_step3(msg, user_chat_id, username, password),
     )
 
-
 def accept_register_step3(message, user_chat_id, username, password):
+    panel_id = message.text
+    bot.send_message(
+        Admin_chat_id,
+        "3️⃣مرحله سوم\nحالا ایدی اینباند مختص این نماینده رو وارد کنید:\n(توجه کنید که اینباند خالی باشه و نماینده دیگری روی اون فعال نباشه)",
+    )
+    bot.register_next_step_handler(
+        message,
+        lambda msg: accept_register_step4(msg, user_chat_id, username, password, panel_id),
+    )
+
+
+def accept_register_step4(message, user_chat_id, username, password, panel_id):
     traffic = 0
     inb_id = int(message.text)
-    if admins_query.add_admin(username, password, traffic, inb_id):
+    if admins_query.add_admin(username, password, traffic, panel_id, inb_id):
         bot.send_message(
             Admin_chat_id,
             "✅ اطلاعات در دیتابیس اضافه و به نماینده ارسال شد",
