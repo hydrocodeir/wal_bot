@@ -1581,7 +1581,9 @@ def send_emails_(chat_id):
 
             user_list += "```"
             index_emoji = number_to_emoji_string(index)
+
             user_list += f"\n{index_emoji}| 👤 {email}    ⌛ = {remaining_days} Days 🔋 = {int(current_traffic)} GB\n\n"
+
             user_list += "```"
             if len(user_list) > 3500:
                 bot.send_message(
