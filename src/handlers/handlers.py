@@ -1696,82 +1696,35 @@ def renew_user_step1(message):
             message.chat.id, "✅ عملیات لغو شد!", reply_markup=admins_menu()
         )
         return
-
+    
     email = message.text
     chat_id = message.chat.id
+    bot.send_message(chat_id, "🔋 لطفا ترافیک قابل استفاده (عدد انگلیسی) بر حسب GB برای این کاربر را وارد کنید:")
+    bot.register_next_step_handler(message, lambda msg: renew_user_step2(msg, email))
 
-    get = api.user_obj(chat_id, email)
 
-    if get.status_code == 200:
-        try:
-            response = get.json()
-        except Exception as e:
-            bot.send_message(
-                chat_id,
-                "❌ خطا در پردازش پاسخ از سرور!",
-                parse_mode="markdown",
-                reply_markup=admins_menu(),
-            )
-            return
 
-        obj = response.get("obj")
-        if obj is None:
-            bot.send_message(
-                chat_id,
-                "❌ کاربر یافت نشد یا اطلاعات نامعتبر است!",
-                parse_mode="markdown",
-                reply_markup=admins_menu(),
-            )
-            return
-
-        gb = obj.get("total", 0) / (1024**3)
-        get_admin_traffic = admins_query.admin_data(chat_id)
-        admin_traffic = get_admin_traffic["traffic"]
-        if admins_query != "false":
-            try:
-                if gb > admin_traffic:
-                    bot.send_message(
-                        chat_id,
-                        f"❌ ترافیک کافی برای ایجاد کاربر ندارید. (ترافیک شما: {admin_traffic} GB)",
-                        reply_markup=admins_menu(),
-                    )
-                    return
-
-                if admin_traffic < 100:
-                    warning_text = (
-                        "⚠️ *هشدار مهم*\n\n"
-                        "🚨 *ترافیک باقی‌مانده شما کمتر از 100 گیگ است!*\n"
-                        "❗ لطفاً بررسی کنید."
-                    )
-                    bot.send_message(chat_id, warning_text, parse_mode="Markdown")
-            except:
-                pass
-
-        if admins_query.reduce_traffic(chat_id, gb):
-            get_admin_inb_id = admins_query.admin_data(chat_id)
-            inb_id = get_admin_inb_id["inb_id"]
-
-            response = api.reset_traffic(chat_id, inb_id, email)
-            if response.status_code == 200:
-                bot.send_message(
-                    chat_id,
-                    "*✅ ترافیک کاربر ریست شد، حالا تعداد روز تمدید رو واردکنید:*",
-                    parse_mode="markdown",
-                )
-                bot.register_next_step_handler(
-                    message, lambda msg: renew_user_step2(msg, email)
-                )
-    else:
+def renew_user_step2(message, email):
+    if message.text.strip() in ["❌ بازگشت ❌"]:
         bot.send_message(
-            chat_id,
-            "*❌ درخواست با خطا مواجه شد، لطفاً بعداً تلاش کنید!*",
-            parse_mode="markdown",
-            reply_markup=admins_menu(),
+            message.chat.id, "✅ عملیات لغو شد!", reply_markup=admins_menu()
         )
+        return
+    chat_id = message.chat.id
+    gb = message.text.strip()
+
+    if not gb.isdigit() or int(gb) <= 0:
+        bot.send_message(chat_id, "❌ لطفاً مقدار ترافیک معتبر و مثبت وارد کنید.")
+        bot.register_next_step_handler(message, lambda msg: renew_user_step2(msg, email))
+        return
+
+    gb = int(gb)
+    bot.send_message(chat_id, "⌛ لطفا تعداد روز های قابل استفاده (عدد انگلیسی) برای این کاربر را وارد کنید:")
+    bot.register_next_step_handler(message, lambda msg: renew_user_step3(msg, email, gb))
 
 
 # renew user step2
-def renew_user_step2(message, email):
+def renew_user_step3(message, email, gb):
     if message.text.strip() in ["❌ بازگشت ❌"]:
         bot.send_message(
             message.chat.id, "✅ عملیات لغو شد!", reply_markup=admins_menu()
@@ -1780,6 +1733,7 @@ def renew_user_step2(message, email):
 
     try:
         days = int(message.text)
+        total_gb = gb * 1024 * 1024 * 1024
     except ValueError:
         bot.send_message(
             message.chat.id,
@@ -1803,46 +1757,61 @@ def renew_user_step2(message, email):
             data = response.json()
             settings = json.loads(data["obj"]["settings"])
             clients = settings["clients"]
+            user_found = False
 
             for client in clients:
                 if client["email"] == email:
-                    id = client["id"]
-                    total_gb = client["totalGB"]
+                    client_id = client["id"]
                     sub_id = client["subId"]
+                    user_found = True
                     break
 
-            settings = {
-                "clients": [
-                    {
-                        "id": id,
-                        "enable": True,
-                        "flow": "",
-                        "email": email,
-                        "imitIp": "",
-                        "totalGB": total_gb,
-                        "expiryTime": expiry_time,
-                        "tgId": "",
-                        "subId": sub_id,
-                        "reset": "",
-                    }
-                ]
-            }
+            if user_found:
+                settings = {
+                    "clients": [
+                        {
+                            "id": client_id,
+                            "enable": True,
+                            "flow": "",
+                            "email": email,
+                            "imitIp": "",
+                            "totalGB": total_gb,
+                            "expiryTime": expiry_time,
+                            "tgId": "",
+                            "subId": sub_id,
+                            "reset": "",
+                        }
+                    ]
+                }
 
-            proces = {"id": inb_id, "settings": json.dumps(settings)}
-            res = api.update_email(chat_id, id, proces)
+                proces = {"id": inb_id, "settings": json.dumps(settings)}
+                res = api.update_email(chat_id, client_id, proces)
 
-            if res.status_code == 200:
+                if res.status_code == 200:
+                    bot.send_message(
+                        chat_id,
+                        f"*✅ اشتراک کاربر: {email} با موفقیت تمدید شد*",
+                        parse_mode="markdown",
+                        reply_markup=admins_menu(),
+                    )
+                    get_admin_traffic = admins_query.admin_data(chat_id)
+                    admin_traffic = get_admin_traffic["traffic"]
+                    if admin_traffic.lower() == "false":
+                        admin_traffic = False
+                    else:
+                        admin_traffic = int(admin_traffic)
+                    if admin_traffic is False:
+                        admins_query.reduce_traffic(chat_id, gb)
+                    else:
+                        if gb > admin_traffic:
+                            bot.send_message(chat_id, "❌ ترافیک کافی برای ایجاد کاربر ندارید.")
+                            return
+                        else:
+                            admins_query.reduce_traffic(chat_id, gb)
+            if not user_found:
                 bot.send_message(
                     chat_id,
-                    f"*✅ اشتراک کاربر: {email}، با موفقیت تمدید شد*",
-                    parse_mode="markdown",
-                    reply_markup=admins_menu(),
-                )
-            else:
-                bot.send_message(
-                    chat_id,
-                    f"*❌ خطا در تمدید: {res.status_code}*",
-                    parse_mode="markdown",
+                    f"⚠️کاربری با نام: {email} یافت نشد",
                     reply_markup=admins_menu(),
                 )
         else:
