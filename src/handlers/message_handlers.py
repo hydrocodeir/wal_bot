@@ -17,6 +17,7 @@ from handlers.handlers import (
     delete_user_step1,
     get_admin_info,
     backup_page,
+    panels_page,
 )
 from db.query import admins_query, help_message_query, registering_message
 from messages.messages import messages_setting
@@ -55,6 +56,8 @@ def message_handler(message):
         plans_page(message)
     if message.text == "💸 پلن پس پرداخت":
         debt_page(message)
+    if message.text == "💻 پنل ها" and message.chat.id == Admin_chat_id:
+        panels_page(message)
 
     if message.text == "📘 متن راهنما" and message.chat.id == Admin_chat_id:
         help_message = help_message_query.show_message()

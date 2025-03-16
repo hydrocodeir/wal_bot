@@ -1,7 +1,5 @@
 from sqlalchemy import create_engine, Column, Integer, String, Boolean, MetaData
 from sqlalchemy.orm import sessionmaker, declarative_base
-import threading
-import time
 
 # creat database
 engine = create_engine("sqlite:///data/wal.db")
@@ -22,6 +20,7 @@ class admins(base):
     debt = Column("debt", Integer, default=0)
     debt_days = Column("debt_days", Integer, default=0)
     status = Column("status", Boolean, default=True)
+    panel_id = Column("panel_id", Integer, default=0)
 
 
 class priceing(base):
@@ -69,6 +68,16 @@ class BotSettings(base):
     create_notif = Column("creat_notif", Boolean, default=True)
     delete_notif = Column("delete_notif", Boolean, default=True)
     debt_system = Column("debt_system", Boolean, default=False)
+
+class Panels(base):
+    __tablename__ = "panels"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String, nullable=False)
+    address = Column(String, nullable=False)
+    sub = Column(String, nullable=False) 
+    username = Column(String, nullable=False)
+    password = Column(String, nullable=False)
 
 
 base.metadata.create_all(engine)

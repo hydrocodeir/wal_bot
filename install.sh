@@ -1,4 +1,3 @@
-
 set -e
 
 
@@ -9,58 +8,112 @@ RED='\e[31m'
 NC='\e[0m'
 INSTALL_DIR="/opt/walbot"
 
+print_progress() {
+    local title=$1
+    echo -e "\n${CYAN}┌──────────────────────────────────────┐${NC}"
+    echo -e "${CYAN}│${NC}       $title       ${CYAN}│${NC}"
+    echo -e "${CYAN}└──────────────────────────────────────┘${NC}\n"
+}
+
+print_step() {
+    local step=$1
+    local message=$2
+    echo -e "${YELLOW}[$step]${NC} ⇾  ${message}"
+}
+
+print_success() {
+    local message=$1
+    echo -e "\n${GREEN}✓ ${message}${NC}\n"
+}
+
+print_error() {
+    local message=$1
+    echo -e "\n${RED}✗ ${message}${NC}\n"
+}
+
 install_wal_bot() {
-    echo -e "${GREEN}Installing Wal Bot...${NC}"
-    sudo apt update && sudo apt upgrade -y
-    curl -fsSL https://get.docker.com | sh
-    sudo mkdir -p "$INSTALL_DIR/data"
+    print_progress "INSTALLING WAL BOT"
+    
+    print_step "1/6" "Updating packages..."
+    sudo apt update && sudo apt upgrade -y || { print_error "Failed to update packages"; return 1; }
+    
+    print_step "2/6" "Installing Docker..."
+    curl -fsSL https://get.docker.com | sh || { print_error "Failed to install Docker"; return 1; }
+    
+    print_step "3/6" "Creating directories..."
+    sudo mkdir -p "$INSTALL_DIR/data" || { print_error "Failed to create directories"; return 1; }
+    
+    print_step "4/6" "Downloading config files..."
     sudo curl -o "$INSTALL_DIR/docker-compose.yml" https://raw.githubusercontent.com/primeZdev/wal_bot/main/docker-compose.yml
     cd "$INSTALL_DIR"
     sudo curl -o .env https://raw.githubusercontent.com/primeZdev/wal_bot/main/.env.example
+    
+    print_step "5/6" "Setting up configuration..."
+    echo -e "${CYAN}Please edit the .env file...${NC}"
     sudo nano .env
-    sudo docker compose up -d
-    echo -e "${GREEN}Wal Bot installed successfully!${NC}"
+    
+    print_step "6/6" "Starting services..."
+    sudo docker compose up -d || { print_error "Failed to start services"; return 1; }
+    
+    print_success "Wal Bot installed successfully!"
 }
 
 update_wal_bot() {
-    echo -e "${YELLOW}Updating Wal Bot...${NC}"
-    cd "$INSTALL_DIR"
-    echo -e "${GREEN}Pulling latest updates...${NC}"
-    sudo docker compose pull
-    echo -e "${GREEN}Starting Wal Bot...${NC}"
-    sudo docker compose up -d
-    echo -e "${GREEN}Running database migrations...${NC}"
-    sudo docker exec walbot-walbot-1 alembic upgrade head
-    echo -e "${GREEN}Restarting Wal Bot...${NC}"
-    sudo docker compose restart
-    echo -e "${GREEN}Wal Bot updated successfully!${NC}"
+    print_progress "UPDATING WAL BOT"
+    
+    cd "$INSTALL_DIR" || { print_error "Installation directory not found"; return 1; }
+    
+    print_step "1/4" "Pulling latest changes..."
+    sudo docker compose pull || { print_error "Failed to pull updates"; return 1; }
+    
+    print_step "2/4" "Starting services..."
+    sudo docker compose up -d || { print_error "Failed to start services"; return 1; }
+    
+    print_step "3/4" "Running database migrations..."
+    sudo docker exec walbot-walbot-1 alembic upgrade head || { print_error "Failed to run migrations"; return 1; }
+    
+    print_step "4/4" "Restarting services..."
+    sudo docker compose restart || { print_error "Failed to restart services"; return 1; }
+    
+    print_success "Wal Bot updated successfully!"
 }
 
 remove_wal_bot() {
-    echo -e "${RED}Removing Wal Bot...${NC}"
-    cd "$INSTALL_DIR"
-    sudo docker compose down
-    sudo rm -rf "$INSTALL_DIR"
-    echo -e "${GREEN}Wal Bot removed successfully!${NC}"
+    print_progress "REMOVING WAL BOT"
+    
+    print_step "1/2" "Stopping services..."
+    cd "$INSTALL_DIR" && sudo docker compose down || { print_error "Failed to stop services"; return 1; }
+    
+    print_step "2/2" "Removing files..."
+    sudo rm -rf "$INSTALL_DIR" || { print_error "Failed to remove files"; return 1; }
+    
+    print_success "Wal Bot removed successfully!"
+}
+
+show_menu() {
+    echo -e "${CYAN}┌──────────────────────────────────────┐${NC}"
+    echo -e "${CYAN}│${NC}       WALBOT INSTALLER           ${CYAN}│${NC}"
+    echo -e "${CYAN}│${NC}         @primez_dev                ${CYAN}│${NC}"
+    echo -e "${CYAN}├──────────────────────────────────────┤${NC}"
+    echo -e "${CYAN}│${NC}  ${GREEN}1.${NC}  Install Wal Bot            ${CYAN}│${NC}"
+    echo -e "${CYAN}│${NC}  ${YELLOW}2.${NC}  Update Wal Bot             ${CYAN}│${NC}"
+    echo -e "${CYAN}│${NC}  ${RED}3.${NC}   Remove Wal Bot             ${CYAN}│${NC}"
+    echo -e "${CYAN}│${NC}  ${CYAN}4.${NC}  Exit                      ${CYAN}│${NC}"
+    echo -e "${CYAN}└──────────────────────────────────────┘${NC}"
+    echo -e "\n👉 ${CYAN}Choose an option:${NC} "
 }
 
 while true; do
     clear
-    echo -e "${CYAN}========================================${NC}"
-    echo -e "${CYAN}      Wal Bot Installer  |  @primez_dev ${NC}"
-    echo -e "${CYAN}========================================${NC}"
-    echo -e "${GREEN} 1.   Install Wal Bot${NC}"
-    echo -e "${YELLOW} 2.   Update Wal Bot${NC}"
-    echo -e "${RED} 3.   Remove Wal Bot${NC}"
-    echo -e "${CYAN} 4.   Exit${NC}"
-    echo -e "${CYAN}========================================${NC}"
-    read -rp "👉 Choose an option: " OPTION
+    show_menu
+    read -r OPTION
     case $OPTION in
         1) install_wal_bot ;;
         2) update_wal_bot ;;
         3) remove_wal_bot ;;
-        4) echo -e "${CYAN}Goodbye!  ${NC}"; exit 0 ;;
-        *) echo -e "${RED}Invalid option. Please try again.${NC}" ;;
+        4) echo -e "\n${CYAN}Goodbye! ${NC}\n"; exit 0 ;;
+        *) echo -e "\n${RED}Invalid option. Please try again.${NC}\n" ;;
     esac
-    sleep 2
+    echo -e "\n${YELLOW}Press Enter to continue...${NC}"
+    read -r
 done
