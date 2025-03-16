@@ -9,15 +9,16 @@ class _MessageSetings(BaseSettings):
     )
 
     START_ADMIN: str = (
-        "درود 🙌🏻\n"
-        "به داشبورد مدیریت وال بات خوش آمدید.\n\n"
-        "💻 devlop by: @primez_dev\n"
-        f"🐋 wall bot {__version__}"
+        "🎉 به داشبورد مدیریت وال بات خوش آمدید.\n\n"
+        "━━━━━━━━━━━━━━━━━\n"
+        f"🐋 wall bot v{__version__}\n"
+        "👨‍💻 devlop by: @primez_dev\n"
+        f"🏢 Sponsor: @pingihostbot"
     )
     START_NONE_SUDO: str = (
-        "درود 🙌🏻\n"
-        "به پنل مدیریت کاربران ویتوری وال بات خوش آمدید.\n\n"
-        f"🐋 wall bot {__version__}"
+        "🎉 به پنل مدیریت کاربران ویتوری وال بات خوش آمدید.\n\n"
+        "━━━━━━━━━━━━━━━━━\n"
+        f"🐋 wall bot v{__version__}"
     )
     ADD_ADMIN_STEP1: str = (
         "1⃣ مرحله اول \n"
