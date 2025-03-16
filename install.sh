@@ -10,9 +10,13 @@ INSTALL_DIR="/opt/walbot"
 
 print_progress() {
     local title=$1
-    echo -e "\n${CYAN}┌──────────────────────────────────────┐${NC}"
-    echo -e "${CYAN}│${NC}       $title       ${CYAN}│${NC}"
-    echo -e "${CYAN}└──────────────────────────────────────┘${NC}\n"
+    local title_length=${#title}
+    local padding_size=$(( (40 - title_length) / 2 ))
+    local padding=$(printf '%*s' "$padding_size" '')
+    
+    echo -e "\n${CYAN}┌────────────────────────────────────────────┐${NC}"
+    echo -e "${CYAN}│${NC}${padding}${title}${padding}${CYAN}│${NC}"
+    echo -e "${CYAN}└────────────────────────────────────────────┘${NC}\n"
 }
 
 print_step() {
@@ -32,7 +36,7 @@ print_error() {
 }
 
 install_wal_bot() {
-    print_progress "INSTALLING WAL BOT"
+    print_progress "INSTALLING WALBOT"
     
     print_step "1/6" "Updating packages..."
     sudo apt update && sudo apt upgrade -y || { print_error "Failed to update packages"; return 1; }
@@ -59,27 +63,27 @@ install_wal_bot() {
 }
 
 update_wal_bot() {
-    print_progress "UPDATING WAL BOT"
+    print_progress "UPDATING WALBOT"
     
     cd "$INSTALL_DIR" || { print_error "Installation directory not found"; return 1; }
     
-    print_step "1/4" "Pulling latest changes..."
+    print_step "1/3" "Pulling latest changes..."
     sudo docker compose pull || { print_error "Failed to pull updates"; return 1; }
     
-    print_step "2/4" "Starting services..."
+    print_step "2/3" "Starting services..."
     sudo docker compose up -d || { print_error "Failed to start services"; return 1; }
     
-    print_step "3/4" "Running database migrations..."
-    sudo docker exec walbot-walbot-1 alembic upgrade head || { print_error "Failed to run migrations"; return 1; }
+    # print_step "3/4" "Running database migrations..."
+    # sudo docker exec walbot-walbot-1 alembic upgrade head || { print_error "Failed to run migrations"; return 1; }
     
-    print_step "4/4" "Restarting services..."
+    print_step "3/3" "Restarting services..."
     sudo docker compose restart || { print_error "Failed to restart services"; return 1; }
     
     print_success "Wal Bot updated successfully!"
 }
 
 remove_wal_bot() {
-    print_progress "REMOVING WAL BOT"
+    print_progress "REMOVING WALBOT"
     
     print_step "1/2" "Stopping services..."
     cd "$INSTALL_DIR" && sudo docker compose down || { print_error "Failed to stop services"; return 1; }
@@ -91,16 +95,16 @@ remove_wal_bot() {
 }
 
 show_menu() {
-    echo -e "${CYAN}┌──────────────────────────────────────┐${NC}"
-    echo -e "${CYAN}│${NC}       WALBOT INSTALLER           ${CYAN}│${NC}"
-    echo -e "${CYAN}│${NC}         @primez_dev                ${CYAN}│${NC}"
-    echo -e "${CYAN}├──────────────────────────────────────┤${NC}"
-    echo -e "${CYAN}│${NC}  ${GREEN}1.${NC}  Install Wal Bot            ${CYAN}│${NC}"
-    echo -e "${CYAN}│${NC}  ${YELLOW}2.${NC}  Update Wal Bot             ${CYAN}│${NC}"
-    echo -e "${CYAN}│${NC}  ${RED}3.${NC}   Remove Wal Bot             ${CYAN}│${NC}"
-    echo -e "${CYAN}│${NC}  ${CYAN}4.${NC}  Exit                      ${CYAN}│${NC}"
-    echo -e "${CYAN}└──────────────────────────────────────┘${NC}"
-    echo -e "\n👉 ${CYAN}Choose an option:${NC} "
+    echo -e "${CYAN}┌────────────────────────────────────────────┐${NC}"
+    echo -e "${CYAN}│${NC}            WALBOT INSTALLER                ${CYAN}│${NC}"
+    echo -e "${CYAN}│${NC}             @primez_dev                    ${CYAN}│${NC}"
+    echo -e "${CYAN}├────────────────────────────────────────────┤${NC}"
+    echo -e "${CYAN}│${NC}    ${GREEN}1.${NC} Install Wal Bot                      ${CYAN}│${NC}"
+    echo -e "${CYAN}│${NC}    ${YELLOW}2.${NC} Update Wal Bot                       ${CYAN}│${NC}"
+    echo -e "${CYAN}│${NC}    ${RED}3.${NC} Remove Wal Bot                       ${CYAN}│${NC}"
+    echo -e "${CYAN}│${NC}    ${CYAN}4.${NC} Exit                                ${CYAN}│${NC}"
+    echo -e "${CYAN}└────────────────────────────────────────────┘${NC}"
+    echo -e "\n${CYAN}[?]${NC} Choose an option (1-4): "
 }
 
 while true; do
