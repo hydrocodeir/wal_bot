@@ -1522,6 +1522,8 @@ def send_emails_(chat_id):
     get_admin_inb_id = admins_query.admin_data(chat_id)
     inb_id = get_admin_inb_id["inb_id"]
     get = api.show_users(chat_id, inb_id)
+    bot.send_message(chat_id, "درحال دریافت لیست کاربران...")
+    time.sleep(1)
     if get:
         try:
             data = get.json()
