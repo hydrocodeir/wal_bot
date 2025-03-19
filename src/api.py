@@ -65,7 +65,7 @@ class PanelAPI:
                 password = new_kwargs.pop('password', '')
                 if self.login(address, username, password):
                     
-                    response = method(url, **kwargs)
+                    response = method(url, **new_kwargs)
                 else:
                     logger.error(f"Re-login failed for {address}")
                     return None
