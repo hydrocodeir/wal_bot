@@ -10,19 +10,33 @@ class PanelAPI:
     def __init__(self):
         self.session = requests.Session()
         self.headers = {"Accept": "application/json"}
+        self._current_panel = None
 
     def login(self, address, username, password):
+        if self._current_panel == (address, username, password):
+            return True
+
         try:
             url = f"https://{address}/login"
-            data = {"username": username, "password": password}
-            response = self.session.post(url, json=data, headers=self.headers, timeout=15)
+            data = {
+                "username": username,
+                "password": password
+            }
+            
+            response = self.session.post(
+                url, 
+                data=data,
+                headers=self.headers, 
+                timeout=15
+            )
+            
             if response.status_code == 200:
-                token = response.json().get("token")
-                self.session.headers.update({"Authorization": f"Bearer {token}"})
+                self._current_panel = (address, username, password)
                 return True
             else:
-                logger.error("Login failed! Check .env and your panel file.")
+                logger.error(f"Login failed with status code: {response.status_code}")
                 return False
+                
         except Exception as e:
             logger.error(f"Error during login: {e}")
             return False
@@ -31,11 +45,22 @@ class PanelAPI:
         address = kwargs.pop('address', '')
         username = kwargs.pop('username', '')
         password = kwargs.pop('password', '')
-        self.login(address, username, password)
         
         try:
+            if self._current_panel != (address, username, password):
+                if not self.login(address, username, password):
+                    return None
+
             response = method(url, **kwargs)
+            
+            if response.status_code in [401, 403]:
+                if self.login(address, username, password):
+                    response = method(url, **kwargs)
+                else:
+                    return None
+            
             return response
+            
         except Exception as e:
             logger.error(f"Error making {method.__name__} request to {url}: {e}")
             return None
@@ -70,6 +95,7 @@ class PanelAPI:
         )
 
     def show_users(self, chat_id, inb_id):
+        print("show_users")
         panel_info = get_panel_info(chat_id)
         if not panel_info:
             return None
@@ -83,6 +109,7 @@ class PanelAPI:
         )
 
     def user_obj(self, chat_id, email):
+        print("user_obj")
         panel_info = get_panel_info(chat_id)
         if not panel_info:
             return None

@@ -291,6 +291,7 @@ def debt_contract(message):
 
 
 # callback handler
+user_plan_data = {}
 @bot.callback_query_handler(func=lambda call: True)
 def callback_handler(call):
     markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
@@ -489,7 +490,6 @@ def callback_handler(call):
         delete_user_step2(call, email)
         
     elif call.data.startswith("select_plan_"):
-        data = {}
         bot.delete_message(call.message.chat.id, call.message.message_id)
         id = call.data.split("_")[2]
         bot.send_message(
@@ -497,13 +497,13 @@ def callback_handler(call):
             text="🔗روش پرداخت خود را انتخاب کنید",
             reply_markup=payment_methods(),
         )
-        data[chat_id] = id
+        user_plan_data[chat_id] = id
 
     elif call.data == "card_payment":
         get_card = card_number_query.show_card()
         card = get_card["card_number"]
         bot.delete_message(call.message.chat.id, call.message.message_id)
-        id = data.get(chat_id, "نامشخص")
+        id = user_plan_data.get(chat_id, "نامشخص")
         bot.send_message(
             chat_id=chat_id,
             text=f"*{messages_setting.CARD_PAYMENT_MESSAGE}\n💳 شماره کارت:*\n```{card}```",
@@ -1522,6 +1522,8 @@ def send_emails_(chat_id):
     get_admin_inb_id = admins_query.admin_data(chat_id)
     inb_id = get_admin_inb_id["inb_id"]
     get = api.show_users(chat_id, inb_id)
+    bot.send_message(chat_id, "درحال دریافت لیست کاربران...")
+    time.sleep(1)
     if get:
         try:
             data = get.json()
@@ -1753,6 +1755,7 @@ def renew_user_step3(message, email, gb):
     if get.status_code == 200:
         get_admin_inb_id = admins_query.admin_data(chat_id)
         inb_id = get_admin_inb_id["inb_id"]
+        api.reset_traffic(chat_id, inb_id, email)
         response = api.get_inbound(chat_id, inb_id)
 
         if response.status_code == 200:
