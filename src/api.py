@@ -42,21 +42,32 @@ class PanelAPI:
             return False
 
     def _make_request(self, method, url, **kwargs):
+        original_kwargs = kwargs.copy()
+        
         address = kwargs.pop('address', '')
         username = kwargs.pop('username', '')
         password = kwargs.pop('password', '')
         
         try:
             if self._current_panel != (address, username, password):
+                logger.info(f"New panel detected, logging in to {address}")
                 if not self.login(address, username, password):
+                    logger.error(f"Initial login failed for {address}")
                     return None
 
             response = method(url, **kwargs)
             
             if response.status_code in [401, 403]:
+                logger.info(f"Token expired (status {response.status_code}), relogging in to {address}")
+                new_kwargs = original_kwargs.copy()
+                address = new_kwargs.pop('address', '')
+                username = new_kwargs.pop('username', '')
+                password = new_kwargs.pop('password', '')
                 if self.login(address, username, password):
+                    
                     response = method(url, **kwargs)
                 else:
+                    logger.error(f"Re-login failed for {address}")
                     return None
             
             return response
@@ -95,7 +106,6 @@ class PanelAPI:
         )
 
     def show_users(self, chat_id, inb_id):
-        print("show_users")
         panel_info = get_panel_info(chat_id)
         if not panel_info:
             return None
@@ -109,7 +119,6 @@ class PanelAPI:
         )
 
     def user_obj(self, chat_id, email):
-        print("user_obj")
         panel_info = get_panel_info(chat_id)
         if not panel_info:
             return None
