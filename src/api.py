@@ -27,7 +27,7 @@ class PanelAPI:
                 url, 
                 data=data,
                 headers=self.headers, 
-                timeout=15
+                timeout=30
             )
             
             if response.status_code == 200:
@@ -48,29 +48,38 @@ class PanelAPI:
         username = kwargs.pop('username', '')
         password = kwargs.pop('password', '')
         
+        kwargs.setdefault('timeout', 30)
+        
         try:
             if self._current_panel != (address, username, password):
                 logger.info(f"New panel detected, logging in to {address}")
                 if not self.login(address, username, password):
                     logger.error(f"Initial login failed for {address}")
                     return None
-
-            response = method(url, **kwargs)
-            
-            if response.status_code in [401, 403]:
-                logger.info(f"Token expired (status {response.status_code}), relogging in to {address}")
-                new_kwargs = original_kwargs.copy()
-                address = new_kwargs.pop('address', '')
-                username = new_kwargs.pop('username', '')
-                password = new_kwargs.pop('password', '')
-                if self.login(address, username, password):
+        
+            try:
+                response = method(url, **kwargs)
+                
+                if response.status_code in [401, 403]:
+                    logger.info(f"Token expired (status {response.status_code}), relogging in to {address}")
                     
-                    response = method(url, **new_kwargs)
-                else:
-                    logger.error(f"Re-login failed for {address}")
-                    return None
-            
-            return response
+                    if self.login(address, username, password):
+                        new_kwargs = original_kwargs.copy()
+                        new_kwargs.pop('address', '')
+                        new_kwargs.pop('username', '')
+                        new_kwargs.pop('password', '')
+                        new_kwargs.setdefault('timeout', 30)
+                        
+                        response = method(url, **new_kwargs)
+                    else:
+                        logger.error(f"Re-login failed for {address}")
+                        return None
+                    
+                return response
+                
+            except requests.exceptions.RequestException as e:
+                logger.error(f"Request error: {e}")
+                return None
             
         except Exception as e:
             logger.error(f"Error making {method.__name__} request to {url}: {e}")
