@@ -111,14 +111,18 @@ show_donation() {
 }
 
 show_menu() {
-    echo -e "${CYAN}WALBOT INSTALLER${NC}"
-    echo -e "${CYAN}@primez_dev${NC}"
+    echo -e "╔══════════════════════════════════════╗"
+    echo -e "                                        "
+    echo -e "           ${CYAN}WALBOT INSTALLER${NC}           "
+    echo -e "              ${CYAN}@primez_dev${NC}             "
+    echo -e "                                        "
+    echo -e "╚══════════════════════════════════════╝"
     echo -e ""
     echo -e "${GREEN}1.${NC} Install WalBot"
     echo -e "${YELLOW}2.${NC} Update WalBot"
     echo -e "${RED}3.${NC} Remove WalBot"
     echo -e "${BLUE}4.${NC} Donate"
-    echo -e "${CYAN}4.${NC} Exit"
+    echo -e "${CYAN}5.${NC} Exit"
     echo -e ""
     echo -e "${CYAN}[?]${NC} Choose an option (1-4): "
 }
@@ -132,7 +136,7 @@ while true; do
         2) update_wal_bot ;;
         3) remove_wal_bot ;;
         4) show_donation ;;
-        4) echo -e "\n${CYAN}Goodbye! ${NC}\n"; exit 0 ;;
+        5) echo -e "\n${CYAN}Goodbye! ${NC}\n"; exit 0 ;;
         *) echo -e "\n${RED}Invalid option. Please try again.${NC}\n" ;;
     esac
     echo -e "\n${YELLOW}Press Enter to continue...${NC}"
