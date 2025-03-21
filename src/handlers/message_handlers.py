@@ -132,27 +132,6 @@ def message_handler(message):
         else:
             send_emails_(chat_id)
 
-    if message.text == "⌛ تمدید کاربر":
-        admin = admins_query.admin_data(chat_id)
-        status = admin["status"]
-        if not admins_query.admin_approval(chat_id):
-            bot.send_message(
-                chat_id, "❌ شما وارد نشده‌اید. لطفاً وارد شوید.", reply_markup=markup
-            )
-            return
-
-        elif status is False or not dead_line_status(chat_id):
-            bot.send_message(
-                chat_id, messages_setting.BLOCKING_MESSAGE, reply_markup=admins_menu()
-            )
-            return
-
-        else:
-            msg = bot.send_message(
-                chat_id, f"*{messages_setting.RENEW_SUER}*", parse_mode="markdown", reply_markup=markup2
-            )
-            bot.register_next_step_handler(msg, renew_user_step1)
-
     if message.text == "🎯 راهنما":
         help_message = help_message_query.show_message()
         help_message = help_message["message"]
@@ -162,29 +141,6 @@ def message_handler(message):
             parse_mode="markdown",
             reply_markup=admins_menu(),
         )
-
-    if message.text == "🗑️ حذف کاربر":
-        admin = admins_query.admin_data(chat_id)
-        status = admin["status"]
-        if not admins_query.admin_approval(chat_id):
-            bot.send_message(
-                chat_id, "❌ شما وارد نشده‌اید. لطفاً وارد شوید.", reply_markup=markup
-            )
-            return
-        
-        elif status is False or not dead_line_status(chat_id):
-            bot.send_message(
-                chat_id, messages_setting.BLOCKING_MESSAGE, reply_markup=admins_menu()
-            )
-            return
-
-        else:
-            msg = bot.send_message(
-                chat_id,
-                "⚠️نام کاربر مورد نظر رو جهت حذف کاربر ارسال کنید:",
-                reply_markup=markup2,
-            )
-            bot.register_next_step_handler(msg, delete_user_step1)
 
     if message.text == "🛒 شارژ حساب":
         if not admins_query.admin_approval(chat_id):

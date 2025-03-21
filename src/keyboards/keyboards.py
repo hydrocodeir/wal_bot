@@ -70,9 +70,7 @@ def admins_menu():
         "👤 افزودن کاربر",
         "🪪 نمایش کاربران",
         "💎 مشخصات من",
-        "⌛ تمدید کاربر",
         "🎯 راهنما",
-        "🗑️ حذف کاربر",
         "🛒 شارژ حساب",
         "❌ خارج شدن",
     )
@@ -193,4 +191,15 @@ def panels_control():
         text="❌ حذف پنل", callback_data="delete_panel"
     )
     markup.add(button1, button2, button3)
+    return markup
+
+def user_control(email):
+    markup = InlineKeyboardMarkup(row_width=1)
+    button1 = InlineKeyboardButton(
+        text="❌ حذف کاربر", callback_data=f"delete_user_{email}"
+    )
+    button2 = InlineKeyboardButton(
+        text="🔄️ تمدید کاربر", callback_data=f"renew_user_{email}"
+    )
+    markup.add(button1, button2)
     return markup

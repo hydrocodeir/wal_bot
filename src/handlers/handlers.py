@@ -12,7 +12,8 @@ from keyboards.keyboards import (
     debt_control,
     payment_methods,
     admin_modify_control,
-    panels_control
+    panels_control,
+    user_control
 
 )
 from pay.card_method import receive_photo_step, receive_photo_step_for_debt
@@ -645,6 +646,13 @@ def callback_handler(call):
     elif call.data == "rejectcontractt":
         bot.delete_message(call.message.chat.id, call.message.message_id)
 
+    elif call.data.startswith("delete_user_"):
+        email = call.data.split("_")[2]
+        delete_user_step1(call.message, email)
+
+    elif call.data.startswith("renew_user_"):
+        email = call.data.split("_")[2]
+        renew_user_step1(call.message, email)
 
 def change_debt_price(message):
     try:
@@ -1689,19 +1697,18 @@ def send_sub_id(message):
                 photo,
                 caption=caption_text,
                 parse_mode="HTML",
-                reply_markup=admins_menu(),
+                reply_markup=user_control(email),
+            )
+            bot.send_message(
+                chat_id,
+                "باگزینه‌های بالا میتونید کاربر رو کنترل کنید",
+                reply_markup=admins_menu()
             )
 
 
 # renew user
-def renew_user_step1(message):
-    if message.text.strip() in ["❌ بازگشت ❌"]:
-        bot.send_message(
-            message.chat.id, "✅ عملیات لغو شد!", reply_markup=admins_menu()
-        )
-        return
-    
-    email = message.text
+def renew_user_step1(message, email):
+    bot.delete_message(message.chat.id, message.message_id)
     chat_id = message.chat.id
     bot.send_message(chat_id, "🔋 لطفا ترافیک قابل استفاده (عدد انگلیسی) بر حسب GB برای این کاربر را وارد کنید:")
     bot.register_next_step_handler(message, lambda msg: renew_user_step2(msg, email))
@@ -1858,28 +1865,21 @@ def get_users_info_by_email(email, chat_id):
 
 
 # delete user
-def delete_user_step1(message):
+def delete_user_step1(message, email):
+    bot.delete_message(message.chat.id, message.message_id)
     chat_id = message.chat.id
-    if message.text == "❌ بازگشت ❌":
-        bot.send_message(
-            message.chat.id, "✅ عملیات لغو شد!", reply_markup=admins_menu()
-        )
-        return
+    callback_data = f"del_{email}"
 
-    else:
-        email = message.text
-        callback_data = f"del_{email}"
-
-        markup = InlineKeyboardMarkup(row_width=1)
-        button1 = InlineKeyboardButton(text="✅ تایید ✅", callback_data=callback_data)
-        button2 = InlineKeyboardButton(text="❌ لغو ❌", callback_data="cancel")
-        markup.add(button1, button2)
-        bot.send_message(
-            chat_id,
-            f"*⚠️شما درحال حذف [ {email} ] هستید.\nتایید میکنید؟*",
-            parse_mode="markdown",
-            reply_markup=markup,
-        )
+    markup = InlineKeyboardMarkup(row_width=1)
+    button1 = InlineKeyboardButton(text="✅ تایید ✅", callback_data=callback_data)
+    button2 = InlineKeyboardButton(text="❌ لغو ❌", callback_data="cancel")
+    markup.add(button1, button2)
+    bot.send_message(
+        chat_id,
+        f"*⚠️شما درحال حذف [ {email} ] هستید.\nتایید میکنید؟*",
+        parse_mode="markdown",
+        reply_markup=markup,
+    )
 
 
 def delete_user_step2(call, email):
