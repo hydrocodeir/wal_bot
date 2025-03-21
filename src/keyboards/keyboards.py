@@ -194,7 +194,7 @@ def panels_control():
     return markup
 
 def user_control(email):
-    markup = InlineKeyboardMarkup(row_width=1)
+    markup = InlineKeyboardMarkup(row_width=2)
     button1 = InlineKeyboardButton(
         text="❌ حذف کاربر", callback_data=f"delete_user_{email}"
     )

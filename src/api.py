@@ -13,9 +13,6 @@ class PanelAPI:
         self._current_panel = None
 
     def login(self, address, username, password):
-        if self._current_panel == (address, username, password):
-            return True
-
         try:
             url = f"https://{address}/login"
             data = {
@@ -42,47 +39,26 @@ class PanelAPI:
             return False
 
     def _make_request(self, method, url, **kwargs):
-        original_kwargs = kwargs.copy()
-
         address = kwargs.pop('address', '')
         username = kwargs.pop('username', '')
         password = kwargs.pop('password', '')
-
+        
         kwargs.setdefault('timeout', 30)
-
-        for attempt in range(2):
-            try:
-                if self._current_panel != (address, username, password):
-                    logger.info(f"New panel detected, logging in to {address}")
-                    if not self.login(address, username, password):
-                        logger.error(f"Initial login failed for {address}")
-                        return None
-
-                response = method(url, **kwargs)
-
-                if response.status_code in [401, 403]:
-                    logger.info(f"Token expired (status {response.status_code}), relogging in to {address}")
-
-                    if self.login(address, username, password):
-                        logger.info(f"Retrying request to {url} after re-login...")
-                        new_kwargs = original_kwargs.copy()
-                        new_kwargs.pop('address', '')
-                        new_kwargs.pop('username', '')
-                        new_kwargs.pop('password', '')
-                        new_kwargs.setdefault('timeout', 30)
-
-                        response = method(url, **new_kwargs)
-
-                    else:
-                        logger.error(f"Re-login failed for {address}")
-                        return None
-
-                return response
-
-            except requests.exceptions.RequestException as e:
-                logger.error(f"Request error: {e}")
+        
+        try:
+            if not self.login(address, username, password):
+                logger.error(f"Login failed for {address}")
                 return None
-
+            
+            response = method(url, **kwargs)
+            return response
+            
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Request error: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"Error in request: {e}")
+            return None
 
     def add_user(self, chat_id, c_uuid, email, bytes_value, expiry_time, sub_id, inb_id):
         panel_info = get_panel_info(chat_id)
@@ -131,13 +107,8 @@ class PanelAPI:
         if not panel_info:
             return None
         url = f"https://{panel_info['address']}/panel/api/inbounds/getClientTraffics/{email}"
-        return self._make_request(
-            self.session.get, 
-            url, 
-            address=panel_info['address'], 
-            username=panel_info['username'], 
-            password=panel_info['password']
-        )
+        response = self.session.get(url)
+        return response
 
     def reset_traffic(self, chat_id, inb_id, email):
         panel_info = get_panel_info(chat_id)
