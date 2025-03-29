@@ -604,7 +604,7 @@ class AdminsQuery:
                 admin.debt_days -= 1
                 if setting_query.show_deadline_notif():
                     if admin.debt_days <= 3:
-                        notif_setting.deadline_notif(admin.chat_id, admin.user_name, admin.debt_days)
+                        notif_setting.deadline_notif(admin.chat_id, admin.user_name, admin.debt_days, admin.debt)
 
         session.commit()
         threading.Timer(86400, self.descrease_debt_days).start()
