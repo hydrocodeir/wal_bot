@@ -67,6 +67,7 @@ class BotSettings(base):
     start_notif = Column("start_notif", Boolean, default=True)
     create_notif = Column("creat_notif", Boolean, default=True)
     delete_notif = Column("delete_notif", Boolean, default=True)
+    deadline_notif = Column("deadline_notif", Boolean, default=True)
     debt_system = Column("debt_system", Boolean, default=False)
 
 class Panels(base):

@@ -57,7 +57,10 @@ def notif_status_menu():
     button3 = InlineKeyboardButton(
     text="🔄️ حذف کاربر", callback_data="change_delete_notif_status"
     )
-    markup.add(button1, button2, button3)
+    button4 = InlineKeyboardButton(
+    text="🔄️ مهلت پرداخت", callback_data="change_deadline_notif_status"
+    )
+    markup.add(button1, button2, button3, button4)
     return markup
 
 

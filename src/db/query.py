@@ -1,4 +1,5 @@
 from db.model import session, BotSettings, TrafficPrice, admins, priceing, HelpMessage, RegisteringMessage, Card, Panels
+from handlers.notifications import notif_setting
 import threading
 
 # default settings
@@ -83,6 +84,28 @@ class SettingsQuery:
             settings = session.query(BotSettings).first()
             if settings:
                 return settings.delete_notif
+            else:
+                return False
+        except:
+            return False
+        
+    def change_deadline_notif(self, new_setting):
+        try:
+            update = session.query(BotSettings).first()
+            if update:
+                update.deadline_notif = new_setting
+                session.commit()
+                return True
+            else:
+                return False
+        except:
+            return False
+        
+    def show_deadline_notif(self):
+        try:
+            setting = session.query(BotSettings).first()
+            if setting:
+                return setting.deadline_notif
             else:
                 return False
         except:
@@ -579,6 +602,10 @@ class AdminsQuery:
         for admin in admins_list:
             if admin.debt_days > 0:
                 admin.debt_days -= 1
+                if setting_query.show_deadline_notif():
+                    if admin.debt_days <= 3:
+                        notif_setting.deadline_notif(admin.chat_id, admin.user_name, admin.debt_days)
+
         session.commit()
         threading.Timer(86400, self.descrease_debt_days).start()
 
