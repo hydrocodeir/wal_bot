@@ -1540,6 +1540,9 @@ def send_emails_(chat_id):
             return
         try:
             settings = json.loads(data["obj"]["settings"])
+            total_download = data["obj"]["down"]
+            total_upload = data["obj"]["up"]
+            total_usage = (total_download + total_upload) / (1024**3)
             clients = settings["clients"]
         except:
             return bot.send_message(
@@ -1567,7 +1570,7 @@ def send_emails_(chat_id):
         def number_to_emoji_string(number):
             return "".join(number_to_emoji[int(digit)] for digit in str(number))
 
-        user_list = "📋* لیست کاربران:*\n\n"
+        user_list = f"🔋ترافیک مصرف شده اینباند شما: {int(total_usage)} GB\n📋 لیست کاربران:\n\n"
         for index, client in enumerate(clients, start=1):
             email = client.get("email", "Unknown")
             expiry_time = client.get("expiryTime", 0)
