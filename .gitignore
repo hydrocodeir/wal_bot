@@ -1,6 +1,7 @@
 .codegpt
 .env
 .venv
+.vscode
 __pycache__/
 data/
 *.png

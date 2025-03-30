@@ -162,10 +162,12 @@ def get_notif_status_text():
     start_notif = setting_query.show_start_notif()
     create_notif = setting_query.show_create_notif()
     delete_notif = setting_query.show_delete_notif()
+    deadline_notif = setting_query.show_deadline_notif()
 
     start_notif_status = "✅" if start_notif else "❌"
     create_notif_status = "✅" if create_notif else "❌"
     delete_notif_status = "✅" if delete_notif else "❌"
+    deadline_notif_status = "✅" if deadline_notif else "❌"
 
     response = (
         f"🔔 <b>Notification Status</b>\n"
@@ -173,6 +175,7 @@ def get_notif_status_text():
         f"<b>({start_notif_status}) استارت ربات</b> \n"
         f"<b>({create_notif_status}) ساخت کاربر توسط نماینده</b> \n"
         f"<b>({delete_notif_status}) حذف کاربر توسط نمایندگان</b> \n"
+        f"<b>({deadline_notif_status}) مهلت پرداخت صورتحساب نماینده</b> \n"
     )
     return response
 
@@ -558,6 +561,18 @@ def callback_handler(call):
         current_status = setting_query.show_delete_notif()
         new_status = not current_status
         setting_query.change_delete_notif(new_status)
+        bot.edit_message_text(
+            chat_id=chat_id,
+            message_id=message_id,
+            text=get_notif_status_text(),
+            parse_mode="HTML",
+            reply_markup=notif_status_menu(),
+        )
+
+    elif call.data == "change_deadline_notif_status":
+        current_status = setting_query.show_deadline_notif()
+        new_status = not current_status
+        setting_query.change_deadline_notif(new_status)
         bot.edit_message_text(
             chat_id=chat_id,
             message_id=message_id,
@@ -1540,6 +1555,9 @@ def send_emails_(chat_id):
             return
         try:
             settings = json.loads(data["obj"]["settings"])
+            total_download = data["obj"]["down"]
+            total_upload = data["obj"]["up"]
+            total_usage = (total_download + total_upload) / (1024**3)
             clients = settings["clients"]
         except:
             return bot.send_message(
@@ -1567,7 +1585,7 @@ def send_emails_(chat_id):
         def number_to_emoji_string(number):
             return "".join(number_to_emoji[int(digit)] for digit in str(number))
 
-        user_list = "📋* لیست کاربران:*\n\n"
+        user_list = f"🔋ترافیک مصرف شده اینباند شما: {int(total_usage)} GB\n📋 لیست کاربران:\n\n"
         for index, client in enumerate(clients, start=1):
             email = client.get("email", "Unknown")
             expiry_time = client.get("expiryTime", 0)

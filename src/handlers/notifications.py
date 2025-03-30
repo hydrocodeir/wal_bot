@@ -27,8 +27,6 @@ class notif_for_main_admin:
         )
         bot.send_message(Admin_chat_id, caption, parse_mode='HTML')
 
-
-
     def delete_notif(self, admin_name, email):
         caption = (
             f'🟡<b>Delete notif</b>\n'
@@ -37,6 +35,54 @@ class notif_for_main_admin:
         )
         bot.send_message(Admin_chat_id, caption, parse_mode='HTML')
 
+    def deadline_notif(self, chat_id, username, debt_days, debt):
+        from db.query import traffic_price_query
+        price = traffic_price_query.show_price()
+        admin_debt = debt * price 
+        if debt_days == 3:
+            caption1 = (
+            f'🟡<b>Debt deadline notif</b>\n\n'
+            f'<b>سه روز مهلت پرداخت برای نماینده: {username} باقی مانده!</b>\n\n'
+            f'<b>مبلغ بدهی: {admin_debt} تومان 💵</b>')
+
+            caption2 = (
+            f'🟡<b>Debt deadline notif</b>\n\n'
+            f'<b>از مهلت پرداخت صورتحساب شما فقط سه روز مانده!</b>\n\n'
+            f'<b>مبلغ بدهی: {admin_debt} تومان 💵</b>')
+
+            bot.send_message(
+                Admin_chat_id,
+                text=caption1,
+                parse_mode="HTML"
+                )
+
+            bot.send_message(
+                chat_id,
+                text=caption2,
+                parse_mode="HTML"
+                )
+            
+        if debt_days == 0:
+            caption1 = (
+            f'🟡<b>Debt deadline notif</b>\n\n'
+            f'<b>مهلت پرداخت بدهی برای نماینده: {username} تمام شد!</b>\n\n'
+            f'<b>مبلغ بدهی: {admin_debt} تومان 💵</b>')
+            caption2 = (
+            f'🟡<b>Debt deadline notif</b>\n\n'
+            f'<b>مهلت پرداخت بدهی شما به اتمام رسید!</b>\n\n'
+            f'<b>مبلغ بدهی: {admin_debt} تومان 💵</b>')
+            bot.send_message(
+                Admin_chat_id,
+                text=caption1,
+                parse_mode="HTML"
+                )
+
+            bot.send_message(
+                chat_id,
+                text=caption2,
+                parse_mode="HTML"
+                )
+            
 notif_setting = notif_for_main_admin()
 
 
