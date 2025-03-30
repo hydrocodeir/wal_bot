@@ -19,7 +19,7 @@ from handlers.handlers import (
     backup_page,
     panels_page,
 )
-from db.query import admins_query, help_message_query, registering_message
+from db.query import admins_query, help_message_query, registering_message, traffic_price_query
 from messages.messages import messages_setting
 from config import bot, Admin_chat_id
 from telebot.types import (
@@ -206,8 +206,13 @@ def dead_line_status(chat_id):
     admin_data = admin["traffic"]
     if admin_data.lower() == "false":
         dead_line = admin["debt_days"]
-        if dead_line <= 0:
+        debt = admin["debt"]
+        if dead_line <= 0 and debt > 0:
             return False
+        elif debt == 0 and dead_line <= 0:
+            new_deadline = traffic_price_query.show_dead_line()
+            admins_query.clear_debt(chat_id, new_deadline)
+            return True
         else:
             return True
     return True
